@@ -23,6 +23,10 @@ export const STRINGS = {
     help: 'Help',
     about: 'About',
   },
+  export: {
+    sheetInfo: '3.5" floppy label {width} x {height} mm - {dpi} dpi - FloppyStation Sticker Creator',
+    rulerNote: 'Calibration: this line must measure exactly {length} mm. Print at 100% / Actual size, not "Fit to page".',
+  },
   edit: {
     resetConfirm: 'Start over? This removes all layers and restores the default label. You can undo it.',
   },

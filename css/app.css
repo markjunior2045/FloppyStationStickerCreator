@@ -114,6 +114,32 @@ body {
   margin-top: 10px;
 }
 
+/* checkbox + label | color | value | unit */
+.effect-grid {
+  display: grid;
+  grid-template-columns: 1fr 40px 44px auto;
+  gap: 4px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.effect-grid input[type="color"] {
+  width: 40px;
+  height: 21px;
+  padding: 0 2px;
+}
+
+.effect-grid input[type="text"] {
+  width: 100%;
+  text-align: right;
+}
+
+/* Blur sits under the shadow offset, labelled across the first two columns. */
+.effect-grid .effect-sub {
+  grid-column: 1 / 3;
+  text-align: right;
+}
+
 /* Highlight while an image file is dragged over a drop area. */
 .drop-target {
   outline: 2px dashed var(--menu-highlight-bg);
@@ -139,6 +165,7 @@ body {
   display: flex;
   align-items: center;
   gap: 2px;
+  min-height: 20px;
   padding: 1px 4px;
   cursor: default;
   user-select: none;
@@ -150,7 +177,10 @@ body {
 }
 
 .layer-list li label {
-  /* Checkbox only; the name is a separate span so clicking it selects. */
+  /* Checkbox only (empty label, so give it the box's height); the name is a
+     separate span so clicking it selects. */
+  display: inline-block;
+  height: 13px;
   margin-right: 0;
 }
 

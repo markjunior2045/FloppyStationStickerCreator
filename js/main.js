@@ -13,6 +13,7 @@ import {
   backgroundZoom, constrainBackground, createBackgroundLayer, resetBackgroundFraming, setBackgroundZoom,
 } from './background.js';
 import { createLogoLayer } from './logo.js';
+import { applyLogoEffects } from './logoEffects.js';
 import { enableCenterSnapping } from './snapping.js';
 import { acceptImageDrops, loadImage, readFileAsDataUrl } from './images.js';
 import { formatMm, SCREEN_PX_PER_MM } from './units.js';
@@ -110,6 +111,15 @@ const imagesPanel = initImagesPanel(document.getElementById('images-panel'), {
     setBackgroundZoom(background.object, geometry.bleed, zoom);
     canvas.requestRenderAll();
   },
+  onLogoEffect: (path, value) => {
+    const logo = layers.byType('logo')[0];
+    if (!logo) return;
+    const [group, key] = path.split('.');
+    logo.effects[group][key] = value;
+    applyLogoEffects(logo);
+    canvas.requestRenderAll();
+    syncPanels();
+  },
   onBackgroundReset: () => {
     const background = currentBackground();
     if (!background) return;
@@ -151,7 +161,15 @@ acceptImageDrops(document.querySelector('.canvas-scroll'), (file) => openImage('
 
 canvas.on('object:moving', ({ target }) => constrainIfBackground(target));
 canvas.on('object:scaling', ({ target }) => constrainIfBackground(target));
-canvas.on('object:modified', () => syncPanels());
+canvas.on('object:modified', ({ target }) => {
+  // Keep the outline the same thickness in mm after a resize.
+  const layer = layers.byObject(target);
+  if (layer?.type === 'logo') {
+    applyLogoEffects(layer);
+    canvas.requestRenderAll();
+  }
+  syncPanels();
+});
 
 enableCenterSnapping(canvas, {
   targets: () => ({
@@ -210,7 +228,7 @@ function syncPanels() {
   const background = currentBackground();
   imagesPanel.sync({
     background: background ? { zoom: backgroundZoom(background.object, geometry.bleed) } : null,
-    logo: layers.byType('logo')[0] ? {} : null,
+    logo: layers.byType('logo')[0] ? { effects: layers.byType('logo')[0].effects } : null,
   });
 }
 

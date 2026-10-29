@@ -144,6 +144,27 @@
               <button data-image-action="open" data-i18n="images.open"></button>
               <button data-image-action="remove" data-i18n="images.remove"></button>
             </div>
+            <div class="effect-grid">
+              <span class="effect-toggle">
+                <input id="logo-outline" type="checkbox" data-effect="outline.enabled">
+                <label for="logo-outline" data-i18n="images.outline"></label>
+              </span>
+              <input type="color" data-effect="outline.color" data-i18n-title="images.color">
+              <input type="text" inputmode="decimal" data-effect="outline.width" data-i18n-title="images.outlineWidth">
+              <span data-i18n="units.mm"></span>
+
+              <span class="effect-toggle">
+                <input id="logo-shadow" type="checkbox" data-effect="shadow.enabled">
+                <label for="logo-shadow" data-i18n="images.shadow"></label>
+              </span>
+              <input type="color" data-effect="shadow.color" data-i18n-title="images.color">
+              <input type="text" inputmode="decimal" data-effect="shadow.offset" data-i18n-title="images.shadowOffset">
+              <span data-i18n="units.mm"></span>
+
+              <label class="effect-sub" data-i18n="images.shadowBlur"></label>
+              <input type="text" inputmode="decimal" data-effect="shadow.blur" data-i18n-title="images.shadowBlur">
+              <span data-i18n="units.mm"></span>
+            </div>
           </div>
 
           <p class="hint" data-i18n="images.dropHint"></p>

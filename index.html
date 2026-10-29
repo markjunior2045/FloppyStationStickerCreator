@@ -51,9 +51,73 @@
 
     <div class="window-body app-body">
       <aside class="sidebar">
-        <fieldset>
+        <fieldset id="floppy-panel">
           <legend data-i18n="groups.floppy"></legend>
-          <p class="placeholder" data-i18n="groups.notYet"></p>
+
+          <p class="group-caption" data-i18n="floppy.labelType"></p>
+          <div class="field-row">
+            <input id="mode-front" type="radio" name="label-mode" value="front">
+            <label for="mode-front" data-i18n="floppy.modeFront"></label>
+          </div>
+          <div class="field-row">
+            <input id="mode-wrap" type="radio" name="label-mode" value="wrap">
+            <label for="mode-wrap" data-i18n="floppy.modeWrap"></label>
+          </div>
+
+          <div class="field-row">
+            <label for="corner-style" data-i18n="floppy.corners"></label>
+            <select id="corner-style">
+              <option value="square" data-i18n="floppy.cornersSquare"></option>
+              <option value="two" data-i18n="floppy.cornersTwo"></option>
+              <option value="four" data-i18n="floppy.cornersFour"></option>
+            </select>
+          </div>
+
+          <p class="group-caption" data-i18n="floppy.guides"></p>
+          <div class="field-row">
+            <input id="guide-safety" type="checkbox" data-guide="safety">
+            <label for="guide-safety" data-i18n="floppy.guideSafety"></label>
+          </div>
+          <div class="field-row">
+            <input id="guide-bleed" type="checkbox" data-guide="bleed">
+            <label for="guide-bleed" data-i18n="floppy.guideBleed"></label>
+          </div>
+          <div class="field-row">
+            <input id="guide-fold" type="checkbox" data-guide="fold">
+            <label for="guide-fold" data-i18n="floppy.guideFold"></label>
+          </div>
+
+          <div class="field-row advanced-toggle-row">
+            <button id="advanced-toggle" aria-expanded="false" aria-controls="advanced-panel"></button>
+          </div>
+
+          <fieldset id="advanced-panel" class="advanced-panel" hidden>
+            <legend data-i18n="floppy.advanced"></legend>
+            <p class="group-caption" data-i18n="floppy.dimsWrap"></p>
+            <div class="dim-grid">
+              <label for="dim-width" data-i18n="floppy.dimWidth"></label>
+              <input id="dim-width" type="text" inputmode="decimal" data-dim="width">
+              <span data-i18n="units.mm"></span>
+              <label for="dim-front" data-i18n="floppy.dimFront"></label>
+              <input id="dim-front" type="text" inputmode="decimal" data-dim="front">
+              <span data-i18n="units.mm"></span>
+              <label for="dim-spine" data-i18n="floppy.dimSpine"></label>
+              <input id="dim-spine" type="text" inputmode="decimal" data-dim="spine">
+              <span data-i18n="units.mm"></span>
+              <label for="dim-back" data-i18n="floppy.dimBack"></label>
+              <input id="dim-back" type="text" inputmode="decimal" data-dim="back">
+              <span data-i18n="units.mm"></span>
+              <label for="dim-front-only" data-i18n="floppy.dimFrontOnly"></label>
+              <input id="dim-front-only" type="text" inputmode="decimal" data-dim="frontOnlyHeight">
+              <span data-i18n="units.mm"></span>
+              <label for="dim-radius" data-i18n="floppy.dimRadius"></label>
+              <input id="dim-radius" type="text" inputmode="decimal" data-dim="cornerRadius">
+              <span data-i18n="units.mm"></span>
+            </div>
+            <div class="field-row reset-row">
+              <button id="reset-dimensions" data-i18n="floppy.resetDefaults"></button>
+            </div>
+          </fieldset>
         </fieldset>
         <fieldset>
           <legend data-i18n="groups.images"></legend>

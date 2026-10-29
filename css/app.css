@@ -62,6 +62,44 @@ body {
   color: var(--menu-disabled-fg);
 }
 
+.sidebar .field-row {
+  margin-top: 4px;
+}
+
+.group-caption {
+  margin: 8px 0 2px;
+  font-weight: bold;
+}
+
+.group-caption:first-of-type {
+  margin-top: 0;
+}
+
+.advanced-toggle-row {
+  margin-top: 10px;
+}
+
+.advanced-panel {
+  margin-top: 8px;
+}
+
+.dim-grid {
+  display: grid;
+  grid-template-columns: 1fr 56px auto;
+  gap: 4px 6px;
+  align-items: center;
+}
+
+.dim-grid input {
+  width: 100%;
+  text-align: right;
+}
+
+.reset-row {
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
 /* ---- Right column: canvas ---- */
 
 .workspace {

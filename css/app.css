@@ -519,6 +519,8 @@ body {
   text-align: right;
 }
 
+/* Themes give some controls a display value; keep [hidden] working. */
+.export-grid [hidden],
 #export-copies-row[hidden],
 #export-cutline-row[hidden],
 #export-foldlines-row[hidden] {

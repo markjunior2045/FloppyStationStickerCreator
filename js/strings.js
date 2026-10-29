@@ -37,6 +37,7 @@ export const STRINGS = {
     type: 'Save as type:',
     typePdf: 'PDF - A4 sheet, actual size (*.pdf)',
     typePng: 'PNG image, label only (*.png)',
+    typeProject: 'Project, to edit later (*.json)',
     resolution: 'Resolution:',
     dpi300: '300 dpi',
     dpi600: '600 dpi (small text)',
@@ -53,6 +54,12 @@ export const STRINGS = {
     done: 'Done.',
     failed: 'Export failed. See the browser console for details.',
     groupHint: 'PDF on an A4 sheet at actual size, or a PNG of the label.',
+    savingProject: 'Saving project…',
+    projectNote: 'The project keeps the label, its images and its text so you can open it again with File > Open.',
+  },
+  project: {
+    openError: 'Could not open that project ({reason}).',
+    unsaved: 'You have unsaved changes.',
   },
   edit: {
     resetConfirm: 'Start over? This removes all layers and restores the default label. You can undo it.',

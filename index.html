@@ -28,9 +28,9 @@
       <div class="menu">
         <button class="menu-title" aria-haspopup="true" aria-expanded="false" data-i18n="menu.file"></button>
         <ul class="menu-popup" role="menu">
-          <li role="none"><button role="menuitem" data-action="new" disabled data-i18n="menu.new"></button></li>
-          <li role="none"><button role="menuitem" data-action="open" disabled data-i18n="menu.open"></button></li>
-          <li role="none"><button role="menuitem" data-action="save" disabled data-i18n="menu.save"></button></li>
+          <li role="none"><button role="menuitem" data-action="new" data-i18n="menu.new"></button></li>
+          <li role="none"><button role="menuitem" data-action="open" data-i18n="menu.open"></button></li>
+          <li role="none"><button role="menuitem" data-action="save" data-i18n="menu.save"></button></li>
           <li role="separator" class="menu-separator"></li>
           <li role="none"><button role="menuitem" data-action="export" data-i18n="menu.export"></button></li>
         </ul>
@@ -325,8 +325,9 @@
           <select id="export-type">
             <option value="pdf" data-i18n="exportDialog.typePdf"></option>
             <option value="png" data-i18n="exportDialog.typePng"></option>
+            <option value="json" data-i18n="exportDialog.typeProject"></option>
           </select>
-          <label for="export-dpi" data-i18n="exportDialog.resolution"></label>
+          <label for="export-dpi" id="export-dpi-label" data-i18n="exportDialog.resolution"></label>
           <select id="export-dpi">
             <option value="300" data-i18n="exportDialog.dpi300"></option>
             <option value="600" data-i18n="exportDialog.dpi600"></option>

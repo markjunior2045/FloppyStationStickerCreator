@@ -26,6 +26,10 @@ export function initExportDialog(root, handlers) {
 
   function syncType() {
     const pdf = type.value === 'pdf';
+    const project = type.value === 'json';
+    dpi.hidden = project;
+    root.querySelector('#export-dpi-label').hidden = project;
+    root.querySelector('.export-note').textContent = t(project ? 'exportDialog.projectNote' : 'exportDialog.printNote');
     copiesRow.hidden = !pdf;
     root.querySelector('#export-copies-label').hidden = !pdf;
     root.querySelector('#export-cutline-row').hidden = !pdf;
@@ -84,7 +88,9 @@ export function initExportDialog(root, handlers) {
   });
 
   return {
-    open() {
+    /** type: 'pdf' (default) | 'png' | 'json' (project) */
+    open(initialType = 'pdf') {
+      type.value = initialType;
       root.hidden = false;
       progress.hidden = true;
       copies.value = '1';

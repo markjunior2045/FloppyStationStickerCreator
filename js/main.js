@@ -10,7 +10,8 @@ import {
 import { createClipPath, createLabelView } from './labelView.js';
 import { initFloppyPanel } from './floppyPanel.js';
 import { initImagesPanel } from './imagesPanel.js';
-import { createLayerStore } from './layers.js';
+import { createLayerStore, reserveLayerIds } from './layers.js';
+import { pickProjectFile, projectToBlob, readProjectFile } from './project.js';
 import { initLayerList } from './layerList.js';
 import { coverArea, createBackgroundLayer } from './background.js';
 import { createLogoLayer } from './logo.js';
@@ -479,7 +480,8 @@ async function restoreDocument(state) {
   const images = await Promise.all(state.layers.map((entry) => (entry.src ? loadImage(entry.src) : null)));
   await loadFonts(state.layers.filter((entry) => entry.text).map((entry) => entry.text.fontFamily));
   const selectedId = listSelection;
-  settings = { ...state.settings };
+  reserveLayerIds(state.layers.map((entry) => entry.id));
+  settings = { ...defaultLabelSettings(format), ...state.settings };
   effects = { ...DEFAULT_EFFECTS, ...state.effects };
   layers.clear();
   updateSettings({});
@@ -518,6 +520,41 @@ function syncEditMenu() {
   document.querySelector('[role="menuitem"][data-action="redo"]').disabled = !history.canRedo;
 }
 
+// ---- Project files ----
+
+// Unsaved changes: compare the document with how it was at the last save
+// (image data left out of the comparison; images only change with layers).
+let savedFingerprint = null;
+const documentFingerprint = () =>
+  JSON.stringify(captureDocument(), (key, value) => (key === 'src' ? undefined : value));
+const isDirty = () => savedFingerprint !== documentFingerprint();
+const markSaved = () => { savedFingerprint = documentFingerprint(); };
+
+async function openProject() {
+  const file = await pickProjectFile();
+  if (!file) return;
+  let state;
+  try {
+    state = await readProjectFile(file);
+  } catch (error) {
+    alert(t('project.openError', { reason: error.message }));
+    return;
+  }
+  setSide('front');
+  canvas.discardActiveObject();
+  await restoreDocument(state);
+  viewport.fit();
+  history.commit();
+  markSaved();
+}
+
+window.addEventListener('beforeunload', (event) => {
+  if (layers.all.length > 0 && isDirty()) {
+    event.preventDefault();
+    event.returnValue = t('project.unsaved');
+  }
+});
+
 function resetDocument() {
   if (!confirm(t('edit.resetConfirm'))) return;
   layers.clear();
@@ -535,6 +572,12 @@ const exportDialog = initExportDialog(document.getElementById('export-dialog'), 
   maxCopies: () => sheetLayout(geometry).max,
   hasFolds: () => geometry.folds.length > 0,
   async run({ type, dpi, copies, cutLine, foldLines, filename }, onProgress) {
+    if (type === 'json') {
+      onProgress(0.5, t('exportDialog.savingProject'));
+      downloadBlob(projectToBlob(captureDocument()), `${filename}.json`);
+      markSaved();
+      return;
+    }
     const items = [
       { object: labelView.base, clip: null },
       ...layers.all
@@ -609,7 +652,10 @@ const actions = {
   'zoom-fit': () => viewport.fit(),
   'side-front': () => setSide('front'),
   'side-back': () => setSide('back'),
-  export: () => exportDialog.open(),
+  export: () => exportDialog.open('pdf'),
+  save: () => exportDialog.open('json'),
+  open: () => openProject(),
+  new: () => resetDocument(),
   'theme-98': () => setTheme('98'),
   'theme-xp': () => setTheme('xp'),
   undo: () => history.undo(),
@@ -644,6 +690,7 @@ for (const el of document.querySelectorAll('.zoom-toolbar, .sidebar')) {
 
 updateSettings({});
 history.commit();
+markSaved();
 syncThemeMenu();
 
 // ?debug exposes internals for manual testing in the console.

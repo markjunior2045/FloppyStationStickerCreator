@@ -43,6 +43,14 @@ function useDiagonalCornerCursors(object) {
 let nextId = 1;
 export const newLayerId = () => `layer-${nextId++}`;
 
+/** After loading layers with existing ids, keep new ids from colliding. */
+export function reserveLayerIds(ids) {
+  for (const id of ids) {
+    const n = Number(String(id).match(/(\d+)$/)?.[1] ?? 0);
+    if (n >= nextId) nextId = n + 1;
+  }
+}
+
 /**
  * hooks: {
  *   below()  objects that stay under the layers (floppy, label base)

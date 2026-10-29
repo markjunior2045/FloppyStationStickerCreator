@@ -13,6 +13,7 @@ import {
   backgroundZoom, constrainBackground, createBackgroundLayer, resetBackgroundFraming, setBackgroundZoom,
 } from './background.js';
 import { createLogoLayer } from './logo.js';
+import { enableCenterSnapping } from './snapping.js';
 import { acceptImageDrops, loadImage, readFileAsDataUrl } from './images.js';
 import { formatMm, SCREEN_PX_PER_MM } from './units.js';
 import { createViewport } from './viewport.js';
@@ -151,6 +152,19 @@ acceptImageDrops(document.querySelector('.canvas-scroll'), (file) => openImage('
 canvas.on('object:moving', ({ target }) => constrainIfBackground(target));
 canvas.on('object:scaling', ({ target }) => constrainIfBackground(target));
 canvas.on('object:modified', () => syncPanels());
+
+enableCenterSnapping(canvas, {
+  targets: () => ({
+    x: [geometry.outline.x + geometry.outline.width / 2],
+    y: geometry.zones.map((zone) => zone.y + zone.height / 2),
+    extent: geometry.bleed,
+  }),
+  scale: () => viewport.zoom * SCREEN_PX_PER_MM,
+  applies: (object) => {
+    const type = layers.byObject(object)?.type;
+    return type !== undefined && type !== 'background';
+  },
+});
 
 function constrainIfBackground(object) {
   if (layers.byObject(object)?.type === 'background') {

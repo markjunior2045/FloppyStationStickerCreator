@@ -15,6 +15,11 @@ import { coverArea, createBackgroundLayer } from './background.js';
 import { createLogoLayer } from './logo.js';
 import { applyLogoEffects, cloneEffects } from './logoEffects.js';
 import { createHistory } from './history.js';
+import {
+  applyTextEffects, bakeTextScale, cloneTextEffects, createTextLayer, MM_PER_PT, textLayerName, textPreset, textProps,
+} from './text.js';
+import { initTextPanel } from './textPanel.js';
+import { loadFont, loadFonts } from './fonts.js';
 import { enableCenterSnapping } from './snapping.js';
 import { acceptImageDrops, loadImage, readFileAsDataUrl } from './images.js';
 import { formatMm, SCREEN_PX_PER_MM } from './units.js';
@@ -133,7 +138,7 @@ const HIDDEN_CLIP = { x: -1000, y: -1000, width: 0.01, height: 0.01, corners: {}
 function editorClip(layer, back) {
   const zone = layer.zone ? geometry.content.find((z) => z.id === layer.zone) : null;
   if (layer.zone && !zone) return HIDDEN_CLIP; // e.g. a back image in front-only mode
-  if (back) return layer.zone === 'front' ? HIDDEN_CLIP : backViewZone(geometry);
+  if (back) return layer.zone && layer.zone !== 'back' ? HIDDEN_CLIP : backViewZone(geometry);
   return zone ?? geometry.content;
 }
 
@@ -258,10 +263,15 @@ async function addImage(type, file) {
 acceptImageDrops(document.querySelector('.canvas-scroll'), (file) => addImage('background', file));
 
 canvas.on('object:modified', ({ target }) => {
-  // Keep the outline the same thickness in mm after a resize.
+  // Keep outlines the same thickness in mm after a resize; text turns the
+  // resize into font size.
   const layer = layers.byObject(target);
   if (layer?.type === 'logo') {
     applyLogoEffects(layer);
+    canvas.requestRenderAll();
+  } else if (layer?.type === 'text') {
+    bakeTextScale(layer.object);
+    applyTextEffects(layer);
     canvas.requestRenderAll();
   }
   syncPanels();
@@ -278,6 +288,70 @@ enableCenterSnapping(canvas, {
   scale: () => viewport.zoom * SCREEN_PX_PER_MM,
   applies: (object) => layers.byObject(object) !== undefined,
 });
+
+// ---- Text ----
+
+const textPanel = initTextPanel(document.getElementById('text-panel'), {
+  onAdd: (zoneId) => addText(zoneId),
+  onRemove: () => {
+    const target = targetLayer('text');
+    if (!target) return;
+    layers.remove(target.id);
+    history.commit();
+  },
+  onChange: async (patch, commit) => {
+    const target = targetLayer('text');
+    if (!target) return;
+    const o = target.object;
+    if (patch.fontFamily) await loadFont(patch.fontFamily);
+    if ('sizePt' in patch) {
+      o.set({ fontSize: patch.sizePt * MM_PER_PT });
+    } else {
+      o.set(patch);
+    }
+    o.initDimensions();
+    o.setCoords();
+    target.name = textLayerName(o, target.name);
+    canvas.requestRenderAll();
+    syncPanels();
+    if (commit) history.commit();
+  },
+  onEffect: (path, value, commit) => {
+    const target = targetLayer('text');
+    if (!target) return;
+    const [group, key] = path.split('.');
+    target.effects[group][key] = value;
+    applyTextEffects(target);
+    canvas.requestRenderAll();
+    syncPanels();
+    if (commit) history.commit();
+  },
+});
+
+async function addText(zoneId) {
+  setSide('front');
+  const props = textPreset(geometry, zoneId);
+  await loadFont(props.fontFamily);
+  const layer = createTextLayer({ props, name: t('layers.text') });
+  // Text stays inside the zone it was added to (a spine line can't spill onto
+  // the back, which would print at the far end after the back is turned).
+  layer.zone = geometry.content.some((zone) => zone.id === zoneId) ? zoneId : null;
+  layer.name = textLayerName(layer.object, nextLayerName('text'));
+  layers.add(layer);
+  canvas.setActiveObject(layer.object);
+  canvas.requestRenderAll();
+  syncPanels();
+  history.commit();
+}
+
+// Typing directly on the canvas.
+canvas.on('text:changed', ({ target }) => {
+  const layer = layers.byObject(target);
+  if (!layer) return;
+  layer.name = textLayerName(target, layer.name);
+  syncPanels();
+});
+canvas.on('text:editing:exited', () => history.commit());
 
 // The list can select hidden layers too (to show, move or delete them),
 // so its selection is tracked here and mirrors the canvas when possible.
@@ -330,6 +404,16 @@ function syncPanels() {
     logo: logo ? { name: logo.name, effects: logo.effects } : null,
     wrap: settings.mode === 'wrap',
   });
+  const text = targetLayer('text');
+  textPanel.sync(text ? {
+    name: text.name,
+    text: text.object.text,
+    fontFamily: text.object.fontFamily,
+    sizePt: text.object.fontSize / MM_PER_PT,
+    fill: text.object.fill,
+    textAlign: text.object.textAlign,
+    effects: text.effects,
+  } : null, settings.mode === 'wrap');
 }
 
 // ---- Document snapshots, undo/redo, reset ----
@@ -349,26 +433,34 @@ function captureDocument() {
         transform: {
           left: o.left, top: o.top, scaleX: o.scaleX, scaleY: o.scaleY, angle: o.angle, flipX: o.flipX, flipY: o.flipY,
         },
-        ...(layer.effects ? { effects: cloneEffects(layer.effects) } : {}),
+        ...(layer.type === 'logo' ? { effects: cloneEffects(layer.effects) } : {}),
+        ...(layer.type === 'text' ? { effects: cloneTextEffects(layer.effects), text: textProps(o) } : {}),
       };
     }),
   };
 }
 
 async function restoreDocument(state) {
-  const images = await Promise.all(state.layers.map((entry) => loadImage(entry.src)));
+  const images = await Promise.all(state.layers.map((entry) => (entry.src ? loadImage(entry.src) : null)));
+  await loadFonts(state.layers.filter((entry) => entry.text).map((entry) => entry.text.fontFamily));
   const selectedId = listSelection;
   settings = { ...state.settings };
   layers.clear();
   updateSettings({});
   state.layers.forEach((entry, i) => {
     const common = { id: entry.id, image: images[i], src: entry.src, name: entry.name };
-    const layer = entry.type === 'background'
-      ? createBackgroundLayer({ ...common, area: geometry.bleed })
-      : createLogoLayer({ ...common, geometry, effects: entry.effects });
+    let layer;
+    if (entry.type === 'background') {
+      layer = createBackgroundLayer({ ...common, area: geometry.bleed });
+    } else if (entry.type === 'logo') {
+      layer = createLogoLayer({ ...common, geometry, effects: entry.effects });
+    } else {
+      layer = createTextLayer({ id: entry.id, name: entry.name, props: entry.text, effects: entry.effects });
+    }
     layer.zone = entry.zone ?? null;
     layer.object.set({ ...entry.transform, visible: entry.visible });
-    if (layer.effects) applyLogoEffects(layer);
+    if (entry.type === 'logo') applyLogoEffects(layer);
+    if (entry.type === 'text') applyTextEffects(layer);
     layer.object.setCoords();
     layers.add(layer);
   });
@@ -414,6 +506,7 @@ const exportDialog = initExportDialog(document.getElementById('export-dialog'), 
     ];
     const rendering = t('exportDialog.rendering', { dpi });
     onProgress(0.05, rendering);
+    await loadFonts(layers.byType('text').map((layer) => layer.object.fontFamily));
     await nextFrame();
     const image = await renderLabel({
       items,

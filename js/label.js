@@ -196,8 +196,8 @@ export function backViewZone(geometry) {
  * bleed where that edge is a cut edge:
  * - 'label': the whole bleed area
  * - 'front': the front zone; in wrap-around its top is the spine fold
- * - 'back': the back zone (wrap-around); its top is the fold and its bottom
- *   sits against the spine, so only the sides get bleed
+ * - 'back' / 'spine': that zone (wrap-around); its top and bottom are folds
+ *   (the back's bottom sits against the spine), so only the sides get bleed
  */
 export function fillArea(geometry, which) {
   const { bleed, outline } = geometry;

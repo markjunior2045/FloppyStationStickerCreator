@@ -78,7 +78,7 @@ export function bakeOutline(image, radius, color) {
   return canvas;
 }
 
-function withAlpha(hex, alpha) {
+export function withAlpha(hex, alpha) {
   const n = Number.parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }

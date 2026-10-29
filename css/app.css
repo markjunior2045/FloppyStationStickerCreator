@@ -151,6 +151,61 @@ body {
   text-align: right;
 }
 
+.text-content {
+  width: 100%;
+  margin-top: 4px;
+  resize: vertical;
+}
+
+/* label | control */
+.text-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 6px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.text-grid select {
+  width: 100%;
+}
+
+#text-size {
+  width: 48px;
+  text-align: right;
+}
+
+#text-color {
+  width: 40px;
+  height: 21px;
+  padding: 0 2px;
+}
+
+.align-buttons {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.align-buttons button {
+  min-width: 0;
+  padding: 0 6px;
+}
+
+/* Pressed toggle, both themes (same look as the Front/Back buttons). */
+.align-buttons button[aria-pressed="true"] {
+  background: #dfdfdf;
+  box-shadow:
+    inset -1px -1px #ffffff,
+    inset 1px 1px #0a0a0a,
+    inset -2px -2px #dfdfdf,
+    inset 2px 2px #808080;
+}
+
+.text-remove-row {
+  margin-top: 6px;
+}
+
 /* Highlight while an image file is dragged over a drop area. */
 .drop-target {
   outline: 2px dashed var(--menu-highlight-bg);

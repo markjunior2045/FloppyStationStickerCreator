@@ -6,6 +6,7 @@
   <title>FloppyStation Sticker Creator</title>
   <link rel="icon" href="data:,">
   <link id="theme-css" rel="stylesheet" href="vendor/98.css-0.1.21/98.css">
+  <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -183,9 +184,59 @@
             <button data-layer-action="delete" data-i18n="layerList.delete"></button>
           </div>
         </fieldset>
-        <fieldset>
+        <fieldset id="text-panel">
           <legend data-i18n="groups.text"></legend>
-          <p class="placeholder" data-i18n="groups.notYet"></p>
+          <div class="field-row fill-row">
+            <span data-i18n="textPanel.add"></span>
+            <button data-add-text="front" data-i18n="textPanel.front"></button>
+            <button data-add-text="spine" data-i18n="textPanel.spine"></button>
+            <button data-add-text="back" data-i18n="textPanel.back"></button>
+          </div>
+          <p class="slot-target" id="text-target"></p>
+          <textarea id="text-content" rows="2" class="text-content" data-i18n-title="textPanel.contentHint"></textarea>
+          <div class="text-grid">
+            <label for="text-font" data-i18n="textPanel.font"></label>
+            <select id="text-font"></select>
+            <label for="text-size" data-i18n="textPanel.size"></label>
+            <div class="field-row">
+              <input id="text-size" type="text" inputmode="decimal">
+              <span data-i18n="textPanel.pt"></span>
+            </div>
+            <label for="text-color" data-i18n="textPanel.color"></label>
+            <div class="field-row">
+              <input id="text-color" type="color">
+              <span class="align-buttons">
+                <button data-align="left" aria-pressed="false" data-i18n="textPanel.left"></button>
+                <button data-align="center" aria-pressed="true" data-i18n="textPanel.center"></button>
+                <button data-align="right" aria-pressed="false" data-i18n="textPanel.right"></button>
+              </span>
+            </div>
+          </div>
+          <div class="effect-grid">
+            <span class="effect-toggle">
+              <input id="text-outline" type="checkbox" data-text-effect="outline.enabled">
+              <label for="text-outline" data-i18n="images.outline"></label>
+            </span>
+            <input type="color" data-text-effect="outline.color" data-i18n-title="images.color">
+            <input type="text" inputmode="decimal" data-text-effect="outline.width" data-i18n-title="images.outlineWidth">
+            <span data-i18n="units.mm"></span>
+
+            <span class="effect-toggle">
+              <input id="text-shadow" type="checkbox" data-text-effect="shadow.enabled">
+              <label for="text-shadow" data-i18n="images.shadow"></label>
+            </span>
+            <input type="color" data-text-effect="shadow.color" data-i18n-title="images.color">
+            <input type="text" inputmode="decimal" data-text-effect="shadow.offset" data-i18n-title="images.shadowOffset">
+            <span data-i18n="units.mm"></span>
+
+            <label class="effect-sub" data-i18n="images.shadowBlur"></label>
+            <input type="text" inputmode="decimal" data-text-effect="shadow.blur" data-i18n-title="images.shadowBlur">
+            <span data-i18n="units.mm"></span>
+          </div>
+          <div class="field-row text-remove-row">
+            <button id="text-remove" data-i18n="images.remove"></button>
+          </div>
+          <p class="hint" data-i18n="textPanel.hint"></p>
         </fieldset>
         <fieldset>
           <legend data-i18n="groups.style"></legend>

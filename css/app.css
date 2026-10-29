@@ -387,8 +387,13 @@ body {
   text-align: right;
 }
 
-#export-copies-row[hidden] {
+#export-copies-row[hidden],
+#export-cutline-row[hidden] {
   display: none;
+}
+
+#export-cutline-row {
+  margin-top: 10px;
 }
 
 .export-note {

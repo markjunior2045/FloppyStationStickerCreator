@@ -5,7 +5,7 @@ import { t } from './strings.js';
 /**
  * handlers: {
  *   maxCopies()                              copies that fit on an A4 sheet
- *   run({ type, dpi, copies, filename }, onProgress)   async; onProgress(0..1, label)
+ *   run({ type, dpi, copies, cutLine, filename }, onProgress)   async; onProgress(0..1, label)
  * }
  */
 export function initExportDialog(root, handlers) {
@@ -16,6 +16,7 @@ export function initExportDialog(root, handlers) {
   const copies = root.querySelector('#export-copies');
   const copiesMax = root.querySelector('#export-copies-max');
   const copiesRow = root.querySelector('#export-copies-row');
+  const cutLine = root.querySelector('#export-cutline');
   const progress = root.querySelector('.progress');
   const progressBar = root.querySelector('.progress-bar');
   const status = root.querySelector('#export-status');
@@ -25,6 +26,7 @@ export function initExportDialog(root, handlers) {
     const pdf = type.value === 'pdf';
     copiesRow.hidden = !pdf;
     root.querySelector('#export-copies-label').hidden = !pdf;
+    root.querySelector('#export-cutline-row').hidden = !pdf;
     const max = handlers.maxCopies();
     copiesMax.textContent = t('exportDialog.copiesMax', { max });
     const value = Number.parseInt(copies.value, 10);
@@ -62,6 +64,7 @@ export function initExportDialog(root, handlers) {
         type: type.value,
         dpi: Number(dpi.value),
         copies: Number.parseInt(copies.value, 10),
+        cutLine: cutLine.checked,
         filename: name,
       }, setProgress);
       setProgress(1, t('exportDialog.done'));

@@ -38,6 +38,7 @@ export const STRINGS = {
     dpi600: '600 dpi (small text)',
     copies: 'Copies:',
     copiesMax: 'of {max} per sheet',
+    cutLine: 'Draw the cut line on the labels (dashed, follows the corners)',
     printNote: 'Print at 100% / "Actual size". Don\'t use "Fit to page". After printing, the ruler at the bottom of the sheet must measure 50 mm.',
     save: 'Save',
     cancel: 'Cancel',

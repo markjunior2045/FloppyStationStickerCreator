@@ -380,7 +380,7 @@ const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => res
 
 const exportDialog = initExportDialog(document.getElementById('export-dialog'), {
   maxCopies: () => sheetLayout(geometry).max,
-  async run({ type, dpi, copies, filename }, onProgress) {
+  async run({ type, dpi, copies, cutLine, filename }, onProgress) {
     const objects = [labelView.base, ...layers.all.map((layer) => layer.object)];
     const rendering = t('exportDialog.rendering', { dpi });
     onProgress(0.05, rendering);
@@ -394,7 +394,7 @@ const exportDialog = initExportDialog(document.getElementById('export-dialog'), 
     onProgress(0.7, t('exportDialog.encoding'));
     await nextFrame();
     const blob = type === 'pdf'
-      ? buildSheetPdf({ image, geometry, copies, dpi, title: filename })
+      ? buildSheetPdf({ image, geometry, copies, dpi, cutLine, title: filename })
       : await canvasToPngBlob(image, dpi);
     downloadBlob(blob, `${filename}.${type}`);
   },

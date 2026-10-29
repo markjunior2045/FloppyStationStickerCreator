@@ -12,6 +12,9 @@ const RULER = { length: 50, height: 14 };
 // Cut line drawn on the label itself: a black dash over a white line, so it
 // shows on any background.
 const CUT_LINE = { under: 0.35, over: 0.18, dash: [1.2, 0.8] };
+// Fold lines across the label: same two-tone line, dash-dot so they don't
+// read as cut lines.
+const FOLD_LINE = { under: 0.3, over: 0.15, dash: [1.6, 0.6, 0.3, 0.6] };
 // Bezier handle length for a quarter circle.
 const ARC_K = 0.5523;
 
@@ -38,9 +41,12 @@ export function sheetLayout(geometry, copies = Infinity) {
 /**
  * image: label raster covering geometry.bleed (from renderLabel).
  * cutLine: draw the exact cut path (rounded corners included) over each label.
+ * foldLines: draw the fold lines across each label (wrap-around).
  * Returns a PDF Blob.
  */
-export function buildSheetPdf({ image, geometry, copies, dpi, title, cutLine = true, compress = true }) {
+export function buildSheetPdf({
+  image, geometry, copies, dpi, title, cutLine = true, foldLines = true, compress = true,
+}) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress });
   doc.setProperties({ title, creator: t('appTitle') });
@@ -64,6 +70,9 @@ export function buildSheetPdf({ image, geometry, copies, dpi, title, cutLine = t
     cut.bottom = cut.top + outline.height;
     drawCropMarks(doc, box, cut);
     drawFoldMarks(doc, box, folds.map((y) => cell.y + (y - bleed.y)));
+    if (foldLines) {
+      for (const y of folds) drawFoldLine(doc, cut.left, cut.right, cell.y + (y - bleed.y));
+    }
     if (cutLine) drawCutLine(doc, { ...outline, x: cut.left, y: cut.top });
   }
 
@@ -97,15 +106,23 @@ function drawCropMarks(doc, box, cut) {
 }
 
 function drawCutLine(doc, rect) {
-  const ops = cutPathOps(rect);
+  drawTwoTone(doc, cutPathOps(rect), CUT_LINE);
+}
+
+function drawFoldLine(doc, left, right, y) {
+  drawTwoTone(doc, [{ op: 'm', c: [left, y] }, { op: 'l', c: [right, y] }], FOLD_LINE);
+}
+
+// White solid line with a black dashed one on top: visible on any background.
+function drawTwoTone(doc, ops, style) {
   doc.setLineJoin('round');
   doc.setDrawColor(255);
-  doc.setLineWidth(CUT_LINE.under);
+  doc.setLineWidth(style.under);
   doc.path(ops);
   doc.stroke();
   doc.setDrawColor(0);
-  doc.setLineWidth(CUT_LINE.over);
-  doc.setLineDashPattern(CUT_LINE.dash, 0);
+  doc.setLineWidth(style.over);
+  doc.setLineDashPattern(style.dash, 0);
   doc.path(ops);
   doc.stroke();
   doc.setLineDashPattern([], 0);

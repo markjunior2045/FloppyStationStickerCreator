@@ -73,9 +73,17 @@ export const STRINGS = {
     background: 'Background',
     logo: 'Logo',
   },
+  layerList: {
+    empty: 'No layers yet.',
+    visible: 'Show / hide',
+    up: 'Up',
+    down: 'Down',
+    delete: 'Delete',
+  },
   groups: {
     floppy: 'Floppy',
     images: 'Images',
+    layers: 'Layers',
     text: 'Text',
     style: 'Style',
     export: 'Export',

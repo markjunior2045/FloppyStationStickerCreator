@@ -8,6 +8,7 @@ import { createLabelView } from './labelView.js';
 import { initFloppyPanel } from './floppyPanel.js';
 import { initImagesPanel } from './imagesPanel.js';
 import { createLayerStore } from './layers.js';
+import { initLayerList } from './layerList.js';
 import {
   backgroundZoom, constrainBackground, createBackgroundLayer, resetBackgroundFraming, setBackgroundZoom,
 } from './background.js';
@@ -158,7 +159,39 @@ function constrainIfBackground(object) {
   }
 }
 
+// The list can select hidden layers too (to show, move or delete them),
+// so its selection is tracked here and mirrors the canvas when possible.
+let listSelection = null;
+
+const layerList = initLayerList(document.getElementById('layers-panel'), {
+  onSelect: (id) => {
+    const layer = layers.byId(id);
+    if (!layer) return;
+    if (layer.object.visible && layer.object.selectable) {
+      canvas.setActiveObject(layer.object);
+    } else {
+      canvas.discardActiveObject();
+    }
+    listSelection = id;
+    canvas.requestRenderAll();
+    syncPanels();
+  },
+  onVisible: (id, visible) => layers.setVisible(id, visible),
+  onMove: (id, delta) => layers.move(id, delta),
+  onDelete: (id) => layers.remove(id),
+});
+
+function onCanvasSelection() {
+  listSelection = layers.byObject(canvas.getActiveObject())?.id ?? null;
+  syncPanels();
+}
+canvas.on('selection:created', onCanvasSelection);
+canvas.on('selection:updated', onCanvasSelection);
+canvas.on('selection:cleared', onCanvasSelection);
+
 function syncPanels() {
+  if (listSelection && !layers.byId(listSelection)) listSelection = null;
+  layerList.render(layers.all, listSelection);
   floppyPanel.sync(settings, labelView.guideVisibility);
   const background = currentBackground();
   imagesPanel.sync({

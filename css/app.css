@@ -120,6 +120,60 @@ body {
   outline-offset: -4px;
 }
 
+/* Explorer-style list (own styling: 98.css' sunken table isn't in XP.css). */
+.layer-list {
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+  height: 96px;
+  overflow-y: auto;
+  background: #ffffff;
+  box-shadow:
+    inset -1px -1px #ffffff,
+    inset 1px 1px #808080,
+    inset -2px -2px #dfdfdf,
+    inset 2px 2px #0a0a0a;
+}
+
+.layer-list li {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 4px;
+  cursor: default;
+  user-select: none;
+}
+
+.layer-list li[aria-selected="true"] {
+  background: var(--menu-highlight-bg);
+  color: var(--menu-highlight-fg);
+}
+
+.layer-list li label {
+  /* Checkbox only; the name is a separate span so clicking it selects. */
+  margin-right: 0;
+}
+
+.layer-list .layer-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.layer-list .layer-empty {
+  color: var(--menu-disabled-fg);
+}
+
+.layer-buttons {
+  margin-top: 6px;
+}
+
+.layer-buttons button {
+  min-width: 0;
+  flex: 1;
+}
+
 .reset-row {
   justify-content: flex-end;
   margin-top: 8px;

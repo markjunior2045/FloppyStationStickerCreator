@@ -125,6 +125,24 @@ body {
   padding: 0 8px;
 }
 
+/* label | slider | value */
+.effect-sliders {
+  display: grid;
+  grid-template-columns: auto 1fr 48px;
+  gap: 4px 6px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.effect-sliders input[type="range"] {
+  width: 100%;
+  min-width: 0;
+}
+
+#effect-preset {
+  flex: 1;
+}
+
 /* checkbox + label | color | value | unit */
 .effect-grid {
   display: grid;

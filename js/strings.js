@@ -138,6 +138,23 @@ export const STRINGS = {
     right: 'Right',
     hint: 'Spine text: keep it short and centered, about 8 pt. Back text is edited upright and printed turned for the fold.',
   },
+  style: {
+    preset: 'Preset:',
+    border: 'White border',
+    fade: 'Fade',
+    darken: 'Darken',
+    grain: 'Grain',
+    mm: '{value} mm',
+    hint: 'Effects cover the whole label and print exactly as shown.',
+    presets: {
+      none: 'None',
+      clean: 'Clean print',
+      shareware90s: '90s Shareware',
+      fadedBox: 'Faded box art',
+      thriftStore: 'Thrift store find',
+      custom: 'Custom',
+    },
+  },
   layerList: {
     empty: 'No layers yet.',
     zone: { front: 'front', spine: 'spine', back: 'back' },

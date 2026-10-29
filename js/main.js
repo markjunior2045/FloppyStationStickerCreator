@@ -6,7 +6,7 @@ import { createFloppyObjects, floppyBounds } from './floppy.js';
 import {
   backViewZone, defaultDimensions, defaultLabelSettings, fillArea, labelBounds, labelGeometry,
 } from './label.js';
-import { createLabelView } from './labelView.js';
+import { createClipPath, createLabelView } from './labelView.js';
 import { initFloppyPanel } from './floppyPanel.js';
 import { initImagesPanel } from './imagesPanel.js';
 import { createLayerStore } from './layers.js';
@@ -20,6 +20,8 @@ import {
 } from './text.js';
 import { initTextPanel } from './textPanel.js';
 import { loadFont, loadFonts } from './fonts.js';
+import { createEffectObjects, DEFAULT_EFFECTS } from './printEffects.js';
+import { initStylePanel } from './stylePanel.js';
 import { enableCenterSnapping } from './snapping.js';
 import { acceptImageDrops, loadImage, readFileAsDataUrl } from './images.js';
 import { formatMm, SCREEN_PX_PER_MM } from './units.js';
@@ -38,6 +40,7 @@ document.title = t('appTitle');
 
 const format = DEFAULT_FORMAT;
 let settings = defaultLabelSettings(format);
+let effects = { ...DEFAULT_EFFECTS };
 let geometry = labelGeometry(settings, format);
 
 const canvas = new Canvas('label-canvas', {
@@ -53,10 +56,12 @@ const labelView = createLabelView(canvas);
 // 'front' = the editor; 'back' = read-only view of the disk's back (wrap-around).
 let side = 'front';
 let backObjects = [];
+// Print effects over the layers: [{ object, zone }].
+let effectItems = [];
 
 const layers = createLayerStore(canvas, {
   below: () => [...floppyObjects, ...backObjects, labelView.base],
-  above: () => labelView.guides,
+  above: () => [...effectItems.map((item) => item.object), ...labelView.guides],
   onChange: () => {
     syncPanels();
     viewport.layout();
@@ -129,6 +134,7 @@ function applySide() {
   labelView.setClipRect(clip);
   labelView.setGuidesHidden(back);
   layers.setClipResolver((layer) => editorClip(layer, back));
+  rebuildEffects();
   layers.setInteractive(!back);
   layers.restack();
   viewport.layout();
@@ -154,6 +160,17 @@ function exportClip(layer) {
   if (!layer.zone) return null;
   if (!geometry.content.some((z) => z.id === layer.zone)) return undefined;
   return fillArea(geometry, layer.zone);
+}
+
+/** Rebuilds the effect objects for the current label, effects and view. */
+function rebuildEffects() {
+  canvas.remove(...effectItems.map((item) => item.object));
+  effectItems = createEffectObjects(geometry, effects);
+  for (const item of effectItems) {
+    item.object.clipPath = createClipPath(editorClip(item, side === 'back'));
+  }
+  canvas.add(...effectItems.map((item) => item.object));
+  layers.restack();
 }
 
 function setSide(next) {
@@ -293,6 +310,17 @@ enableCenterSnapping(canvas, {
   applies: (object) => layers.byObject(object) !== undefined,
 });
 
+// ---- Print effects ----
+
+const stylePanel = initStylePanel(document.getElementById('style-panel'), {
+  onEffects: (patch, commit) => {
+    effects = { ...effects, ...patch };
+    rebuildEffects();
+    syncPanels();
+    if (commit) history.commit();
+  },
+});
+
 // ---- Text ----
 
 const textPanel = initTextPanel(document.getElementById('text-panel'), {
@@ -408,6 +436,7 @@ function syncPanels() {
     logo: logo ? { name: logo.name, effects: logo.effects } : null,
     wrap: settings.mode === 'wrap',
   });
+  stylePanel.sync(effects);
   const text = targetLayer('text');
   textPanel.sync(text ? {
     name: text.name,
@@ -425,6 +454,7 @@ function syncPanels() {
 function captureDocument() {
   return {
     settings: { ...settings },
+    effects: { ...effects },
     layers: layers.all.map((layer) => {
       const o = layer.object;
       return {
@@ -449,6 +479,7 @@ async function restoreDocument(state) {
   await loadFonts(state.layers.filter((entry) => entry.text).map((entry) => entry.text.fontFamily));
   const selectedId = listSelection;
   settings = { ...state.settings };
+  effects = { ...DEFAULT_EFFECTS, ...state.effects };
   layers.clear();
   updateSettings({});
   state.layers.forEach((entry, i) => {
@@ -490,6 +521,7 @@ function resetDocument() {
   if (!confirm(t('edit.resetConfirm'))) return;
   layers.clear();
   settings = defaultLabelSettings(format);
+  effects = { ...DEFAULT_EFFECTS };
   updateSettings({});
   history.commit();
 }
@@ -507,6 +539,8 @@ const exportDialog = initExportDialog(document.getElementById('export-dialog'), 
       ...layers.all
         .map((layer) => ({ object: layer.object, clip: exportClip(layer) }))
         .filter((item) => item.clip !== undefined),
+      // Effects run into the bleed like the layers (the border is shaped already).
+      ...effectItems.map((item) => ({ object: item.object, clip: null })),
     ];
     const rendering = t('exportDialog.rendering', { dpi });
     onProgress(0.05, rendering);

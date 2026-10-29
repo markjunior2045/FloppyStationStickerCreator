@@ -238,9 +238,27 @@
           </div>
           <p class="hint" data-i18n="textPanel.hint"></p>
         </fieldset>
-        <fieldset>
+        <fieldset id="style-panel">
           <legend data-i18n="groups.style"></legend>
-          <p class="placeholder" data-i18n="groups.notYet"></p>
+          <div class="field-row">
+            <label for="effect-preset" data-i18n="style.preset"></label>
+            <select id="effect-preset"></select>
+          </div>
+          <div class="effect-sliders">
+            <label for="effect-border" data-i18n="style.border"></label>
+            <input id="effect-border" type="range" data-effect-key="border">
+            <span class="slider-value" data-effect-value="border"></span>
+            <label for="effect-fade" data-i18n="style.fade"></label>
+            <input id="effect-fade" type="range" data-effect-key="fade">
+            <span class="slider-value" data-effect-value="fade"></span>
+            <label for="effect-darken" data-i18n="style.darken"></label>
+            <input id="effect-darken" type="range" data-effect-key="darken">
+            <span class="slider-value" data-effect-value="darken"></span>
+            <label for="effect-grain" data-i18n="style.grain"></label>
+            <input id="effect-grain" type="range" data-effect-key="grain">
+            <span class="slider-value" data-effect-value="grain"></span>
+          </div>
+          <p class="hint" data-i18n="style.hint"></p>
         </fieldset>
         <fieldset>
           <legend data-i18n="groups.export"></legend>

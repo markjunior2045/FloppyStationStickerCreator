@@ -23,7 +23,8 @@ import { formatMm, SCREEN_PX_PER_MM } from './units.js';
 import { createViewport } from './viewport.js';
 import { renderLabel } from './exportRender.js';
 import { buildSheetPdf, sheetLayout } from './exportPdf.js';
-import { canvasToPngBlob } from './exportPng.js';
+import { canvasToPngBlob, downloadBlob } from './exportPng.js';
+import { initExportDialog } from './exportDialog.js';
 
 applyStrings();
 document.title = t('appTitle');
@@ -373,6 +374,32 @@ function resetDocument() {
   history.commit();
 }
 
+// ---- Export ----
+
+const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
+
+const exportDialog = initExportDialog(document.getElementById('export-dialog'), {
+  maxCopies: () => sheetLayout(geometry).max,
+  async run({ type, dpi, copies, filename }, onProgress) {
+    const objects = [labelView.base, ...layers.all.map((layer) => layer.object)];
+    const rendering = t('exportDialog.rendering', { dpi });
+    onProgress(0.05, rendering);
+    await nextFrame();
+    const image = await renderLabel({
+      objects,
+      geometry,
+      dpi,
+      onProgress: (fraction) => onProgress(0.05 + fraction * 0.6, rendering),
+    });
+    onProgress(0.7, t('exportDialog.encoding'));
+    await nextFrame();
+    const blob = type === 'pdf'
+      ? buildSheetPdf({ image, geometry, copies, dpi, title: filename })
+      : await canvasToPngBlob(image, dpi);
+    downloadBlob(blob, `${filename}.${type}`);
+  },
+});
+
 // ---- Commands ----
 
 function unionBounds(a, b) {
@@ -393,6 +420,7 @@ const actions = {
   'zoom-fit': () => viewport.fit(),
   'side-front': () => setSide('front'),
   'side-back': () => setSide('back'),
+  export: () => exportDialog.open(),
   undo: () => history.undo(),
   redo: () => history.redo(),
   reset: () => resetDocument(),
@@ -404,10 +432,12 @@ function runAction(action) {
 }
 
 initMenuBar(document.querySelector('.menu-bar'), runAction);
-document.querySelector('.zoom-toolbar').addEventListener('click', (event) => {
-  const button = event.target.closest('button[data-action]');
-  if (button) runAction(button.dataset.action);
-});
+for (const el of document.querySelectorAll('.zoom-toolbar, .sidebar')) {
+  el.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-action]');
+    if (button) runAction(button.dataset.action);
+  });
+}
 
 updateSettings({});
 history.commit();

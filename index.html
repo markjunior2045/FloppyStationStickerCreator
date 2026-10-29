@@ -22,7 +22,7 @@
           <li role="none"><button role="menuitem" data-action="open" disabled data-i18n="menu.open"></button></li>
           <li role="none"><button role="menuitem" data-action="save" disabled data-i18n="menu.save"></button></li>
           <li role="separator" class="menu-separator"></li>
-          <li role="none"><button role="menuitem" data-action="export" disabled data-i18n="menu.export"></button></li>
+          <li role="none"><button role="menuitem" data-action="export" data-i18n="menu.export"></button></li>
         </ul>
       </div>
       <div class="menu">
@@ -193,7 +193,10 @@
         </fieldset>
         <fieldset>
           <legend data-i18n="groups.export"></legend>
-          <p class="placeholder" data-i18n="groups.notYet"></p>
+          <div class="field-row">
+            <button data-action="export" data-i18n="menu.export"></button>
+          </div>
+          <p class="hint" data-i18n="exportDialog.groupHint"></p>
         </fieldset>
       </aside>
 
@@ -220,6 +223,48 @@
       <p class="status-bar-field" id="status-zoom"></p>
     </div>
   </div>
+  <div class="modal-backdrop" id="export-dialog" hidden>
+    <div class="window export-dialog" role="dialog" aria-modal="true" aria-labelledby="export-title">
+      <div class="title-bar">
+        <div class="title-bar-text" id="export-title" data-i18n="exportDialog.title"></div>
+        <div class="title-bar-controls">
+          <button aria-label="Close" type="button"></button>
+        </div>
+      </div>
+      <form class="window-body">
+        <div class="export-grid">
+          <label for="export-filename" data-i18n="exportDialog.filename"></label>
+          <input id="export-filename" type="text" value="floppy-label">
+          <label for="export-type" data-i18n="exportDialog.type"></label>
+          <select id="export-type">
+            <option value="pdf" data-i18n="exportDialog.typePdf"></option>
+            <option value="png" data-i18n="exportDialog.typePng"></option>
+          </select>
+          <label for="export-dpi" data-i18n="exportDialog.resolution"></label>
+          <select id="export-dpi">
+            <option value="300" data-i18n="exportDialog.dpi300"></option>
+            <option value="600" data-i18n="exportDialog.dpi600"></option>
+          </select>
+          <label for="export-copies" id="export-copies-label" data-i18n="exportDialog.copies"></label>
+          <div class="field-row" id="export-copies-row">
+            <input id="export-copies" type="text" inputmode="numeric" value="6">
+            <span id="export-copies-max"></span>
+          </div>
+        </div>
+
+        <p class="export-note" data-i18n="exportDialog.printNote"></p>
+
+        <div class="progress" hidden><div class="progress-bar"></div></div>
+        <p class="export-status" id="export-status" aria-live="polite"></p>
+
+        <div class="field-row dialog-buttons">
+          <button id="export-save" type="submit" class="default" data-i18n="exportDialog.save"></button>
+          <button id="export-cancel" type="button" data-i18n="exportDialog.cancel"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- jsPDF UMD build (its ES build has bare imports); exposes window.jspdf. -->
   <script src="vendor/jspdf-4.2.1/jspdf.umd.min.js"></script>
   <script type="module" src="js/main.js"></script>

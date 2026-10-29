@@ -349,6 +349,88 @@ body {
   color: var(--menu-disabled-fg);
 }
 
+/* ---- Export dialog ---- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.modal-backdrop[hidden] {
+  display: none;
+}
+
+.export-dialog {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+}
+
+.export-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 8px;
+  align-items: center;
+}
+
+.export-grid select,
+.export-grid > input {
+  width: 100%;
+}
+
+#export-copies {
+  width: 48px;
+  text-align: right;
+}
+
+#export-copies-row[hidden] {
+  display: none;
+}
+
+.export-note {
+  margin: 12px 0 8px;
+  padding: 6px 8px;
+  background: #ffffe1;
+  border: 1px solid #808080;
+}
+
+.export-status {
+  min-height: 1.2em;
+  margin: 4px 0 0;
+}
+
+.dialog-buttons {
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* Own progress bar: 98.css and XP.css use different markup for theirs. */
+.progress {
+  height: 18px;
+  padding: 2px;
+  background: #ffffff;
+  box-shadow:
+    inset -1px -1px #ffffff,
+    inset 1px 1px #808080,
+    inset -2px -2px #dfdfdf,
+    inset 2px 2px #0a0a0a;
+}
+
+.progress[hidden] {
+  display: none;
+}
+
+.progress-bar {
+  width: 0;
+  height: 100%;
+  background: repeating-linear-gradient(90deg, var(--menu-highlight-bg) 0 8px, transparent 8px 10px);
+  transition: width 0.15s;
+}
+
 /* Sunken frame around a scrollable area; the canvas inside is sized by JS. */
 .canvas-scroll {
   flex: 1;

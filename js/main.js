@@ -4,16 +4,14 @@ import { initMenuBar } from './menu.js';
 import { DEFAULT_FORMAT } from './formats.js';
 import { createFloppyObjects, floppyBounds } from './floppy.js';
 import {
-  backViewZone, defaultDimensions, defaultLabelSettings, labelBounds, labelGeometry,
+  backViewZone, defaultDimensions, defaultLabelSettings, fillArea, labelBounds, labelGeometry,
 } from './label.js';
 import { createLabelView } from './labelView.js';
 import { initFloppyPanel } from './floppyPanel.js';
 import { initImagesPanel } from './imagesPanel.js';
 import { createLayerStore } from './layers.js';
 import { initLayerList } from './layerList.js';
-import {
-  backgroundZoom, constrainBackground, createBackgroundLayer, resetBackgroundFraming, setBackgroundZoom,
-} from './background.js';
+import { coverArea, createBackgroundLayer } from './background.js';
 import { createLogoLayer } from './logo.js';
 import { applyLogoEffects, cloneEffects } from './logoEffects.js';
 import { createHistory } from './history.js';
@@ -50,7 +48,10 @@ let backObjects = [];
 const layers = createLayerStore(canvas, {
   below: () => [...floppyObjects, ...backObjects, labelView.base],
   above: () => labelView.guides,
-  onChange: () => syncPanels(),
+  onChange: () => {
+    syncPanels();
+    viewport.layout();
+  },
 });
 
 // ---- Viewport ----
@@ -63,7 +64,7 @@ const viewport = createViewport(
   document.querySelector('.canvas-scroll'),
   () => (side === 'back'
     ? floppyBounds(format, backViewZone(geometry).y)
-    : unionBounds(floppyBounds(format), labelBounds(geometry))),
+    : editorBounds()),
   ({ mode, zoom }) => {
     const percent = Math.round(zoom * 100);
     zoomReadout.textContent = `${percent}%`;
@@ -93,8 +94,6 @@ function updateSettings(patch) {
   settings = { ...settings, ...patch };
   geometry = labelGeometry(settings, format);
   labelView.setGeometry(geometry);
-  const background = currentBackground();
-  if (background) constrainBackground(background.object, geometry.bleed);
   applySide();
   syncPanels();
   updateLabelStatus();
@@ -120,11 +119,32 @@ function applySide() {
 
   labelView.setClipRect(clip);
   labelView.setGuidesHidden(back);
-  layers.setClip(clip);
+  layers.setClipResolver((layer) => editorClip(layer, back));
   layers.setInteractive(!back);
   layers.restack();
   viewport.layout();
   syncSideControls();
+}
+
+// Far off the label: clips a layer away entirely.
+const HIDDEN_CLIP = { x: -1000, y: -1000, width: 0.01, height: 0.01, corners: {} };
+
+/** Editor clip of a layer: its zone's shape, or the whole label's. */
+function editorClip(layer, back) {
+  const zone = layer.zone ? geometry.content.find((z) => z.id === layer.zone) : null;
+  if (layer.zone && !zone) return HIDDEN_CLIP; // e.g. a back image in front-only mode
+  if (back) return layer.zone === 'front' ? HIDDEN_CLIP : backViewZone(geometry);
+  return zone ?? geometry.content;
+}
+
+/**
+ * Export clip of a layer: none for the whole label (it runs into the bleed),
+ * its zone's fill area for a zone layer, or undefined to leave it out.
+ */
+function exportClip(layer) {
+  if (!layer.zone) return null;
+  if (!geometry.content.some((z) => z.id === layer.zone)) return undefined;
+  return fillArea(geometry, layer.zone);
 }
 
 function setSide(next) {
@@ -159,23 +179,44 @@ function updateLabelStatus() {
 
 // ---- Images ----
 
-const currentBackground = () => layers.byType('background')[0] ?? null;
+/** The layer the Images buttons act on: the selected one of that type, else the top one. */
+function targetLayer(type) {
+  const selected = layers.byId(listSelection);
+  if (selected?.type === type) return selected;
+  return layers.byType(type).at(-1) ?? null;
+}
+
+/** "Background 1", "Background 2"… numbered after the highest in use. */
+function nextLayerName(type) {
+  const base = t(`layers.${type}`);
+  const used = layers.byType(type).map((layer) => Number(layer.name.match(/(\d+)$/)?.[1] ?? 0));
+  return `${base} ${Math.max(0, ...used) + 1}`;
+}
 
 const imagesPanel = initImagesPanel(document.getElementById('images-panel'), {
-  onOpen: (type, file) => openImage(type, file),
+  onAdd: (type, file) => addImage(type, file),
   onRemove: (type) => {
-    for (const layer of layers.byType(type)) layers.remove(layer.id);
+    const target = targetLayer(type);
+    if (!target) return;
+    layers.remove(target.id);
     history.commit();
   },
-  onBackgroundZoom: (zoom, commit) => {
-    const background = currentBackground();
-    if (!background) return;
-    setBackgroundZoom(background.object, geometry.bleed, zoom);
+  onFill: (which) => {
+    const target = targetLayer('background');
+    if (!target) return;
+    // Filling a zone also restricts the image to it, so the front and the back
+    // can carry different images.
+    target.zone = which === 'label' ? null : which;
+    layers.refreshClip(target);
+    coverArea(target.object, fillArea(geometry, which));
+    canvas.setActiveObject(target.object);
     canvas.requestRenderAll();
-    if (commit) history.commit();
+    syncPanels();
+    viewport.layout();
+    history.commit();
   },
   onLogoEffect: (path, value, commit) => {
-    const logo = layers.byType('logo')[0];
+    const logo = targetLayer('logo');
     if (!logo) return;
     const [group, key] = path.split('.');
     logo.effects[group][key] = value;
@@ -184,17 +225,9 @@ const imagesPanel = initImagesPanel(document.getElementById('images-panel'), {
     syncPanels();
     if (commit) history.commit();
   },
-  onBackgroundReset: () => {
-    const background = currentBackground();
-    if (!background) return;
-    resetBackgroundFraming(background.object, geometry.bleed);
-    canvas.requestRenderAll();
-    syncPanels();
-    history.commit();
-  },
 });
 
-async function openImage(type, file) {
+async function addImage(type, file) {
   setSide('front');
   let src;
   let image;
@@ -206,28 +239,24 @@ async function openImage(type, file) {
     alert(t('images.loadError'));
     return;
   }
+  const name = nextLayerName(type);
+  let layer;
   if (type === 'background') {
-    const previous = currentBackground();
-    const layer = createBackgroundLayer({ image, src, name: t('layers.background'), area: geometry.bleed });
-    if (previous) layers.remove(previous.id);
-    layers.add(layer, 0);
-    canvas.setActiveObject(layer.object);
-  } else if (type === 'logo') {
-    const previous = layers.byType('logo')[0];
-    const layer = createLogoLayer({ image, src, name: t('layers.logo'), geometry });
-    const index = previous ? layers.all.indexOf(previous) : layers.all.length;
-    if (previous) layers.remove(previous.id);
-    layers.add(layer, index);
-    canvas.setActiveObject(layer.object);
+    // New backgrounds go right above the existing ones, under any logos.
+    layer = createBackgroundLayer({ image, src, name, area: geometry.bleed });
+    const lastBackground = layers.byType('background').at(-1);
+    layers.add(layer, lastBackground ? layers.all.indexOf(lastBackground) + 1 : 0);
+  } else {
+    layer = createLogoLayer({ image, src, name, geometry });
+    layers.add(layer);
   }
+  canvas.setActiveObject(layer.object);
   syncPanels();
   history.commit();
 }
 
-acceptImageDrops(document.querySelector('.canvas-scroll'), (file) => openImage('background', file));
+acceptImageDrops(document.querySelector('.canvas-scroll'), (file) => addImage('background', file));
 
-canvas.on('object:moving', ({ target }) => constrainIfBackground(target));
-canvas.on('object:scaling', ({ target }) => constrainIfBackground(target));
 canvas.on('object:modified', ({ target }) => {
   // Keep the outline the same thickness in mm after a resize.
   const layer = layers.byObject(target);
@@ -236,6 +265,7 @@ canvas.on('object:modified', ({ target }) => {
     canvas.requestRenderAll();
   }
   syncPanels();
+  viewport.layout();
   history.commit();
 });
 
@@ -246,18 +276,8 @@ enableCenterSnapping(canvas, {
     extent: geometry.bleed,
   }),
   scale: () => viewport.zoom * SCREEN_PX_PER_MM,
-  applies: (object) => {
-    const type = layers.byObject(object)?.type;
-    return type !== undefined && type !== 'background';
-  },
+  applies: (object) => layers.byObject(object) !== undefined,
 });
-
-function constrainIfBackground(object) {
-  if (layers.byObject(object)?.type === 'background') {
-    constrainBackground(object, geometry.bleed);
-    syncPanels();
-  }
-}
 
 // The list can select hidden layers too (to show, move or delete them),
 // so its selection is tracked here and mirrors the canvas when possible.
@@ -303,10 +323,12 @@ function syncPanels() {
   if (listSelection && !layers.byId(listSelection)) listSelection = null;
   layerList.render(layers.all, listSelection);
   floppyPanel.sync(settings, labelView.guideVisibility);
-  const background = currentBackground();
+  const background = targetLayer('background');
+  const logo = targetLayer('logo');
   imagesPanel.sync({
-    background: background ? { zoom: backgroundZoom(background.object, geometry.bleed) } : null,
-    logo: layers.byType('logo')[0] ? { effects: layers.byType('logo')[0].effects } : null,
+    background: background ? { name: background.name } : null,
+    logo: logo ? { name: logo.name, effects: logo.effects } : null,
+    wrap: settings.mode === 'wrap',
   });
 }
 
@@ -323,6 +345,7 @@ function captureDocument() {
         name: layer.name,
         src: layer.src,
         visible: o.visible,
+        zone: layer.zone ?? null,
         transform: {
           left: o.left, top: o.top, scaleX: o.scaleX, scaleY: o.scaleY, angle: o.angle, flipX: o.flipX, flipY: o.flipY,
         },
@@ -343,6 +366,7 @@ async function restoreDocument(state) {
     const layer = entry.type === 'background'
       ? createBackgroundLayer({ ...common, area: geometry.bleed })
       : createLogoLayer({ ...common, geometry, effects: entry.effects });
+    layer.zone = entry.zone ?? null;
     layer.object.set({ ...entry.transform, visible: entry.visible });
     if (layer.effects) applyLogoEffects(layer);
     layer.object.setCoords();
@@ -380,13 +404,19 @@ const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => res
 
 const exportDialog = initExportDialog(document.getElementById('export-dialog'), {
   maxCopies: () => sheetLayout(geometry).max,
-  async run({ type, dpi, copies, cutLine, filename }, onProgress) {
-    const objects = [labelView.base, ...layers.all.map((layer) => layer.object)];
+  hasFolds: () => geometry.folds.length > 0,
+  async run({ type, dpi, copies, cutLine, foldLines, filename }, onProgress) {
+    const items = [
+      { object: labelView.base, clip: null },
+      ...layers.all
+        .map((layer) => ({ object: layer.object, clip: exportClip(layer) }))
+        .filter((item) => item.clip !== undefined),
+    ];
     const rendering = t('exportDialog.rendering', { dpi });
     onProgress(0.05, rendering);
     await nextFrame();
     const image = await renderLabel({
-      objects,
+      items,
       geometry,
       dpi,
       onProgress: (fraction) => onProgress(0.05 + fraction * 0.6, rendering),
@@ -394,13 +424,40 @@ const exportDialog = initExportDialog(document.getElementById('export-dialog'), 
     onProgress(0.7, t('exportDialog.encoding'));
     await nextFrame();
     const blob = type === 'pdf'
-      ? buildSheetPdf({ image, geometry, copies, dpi, cutLine, title: filename })
+      ? buildSheetPdf({ image, geometry, copies, dpi, cutLine, foldLines, title: filename })
       : await canvasToPngBlob(image, dpi);
     downloadBlob(blob, `${filename}.${type}`);
   },
 });
 
 // ---- Commands ----
+
+// The editor shows the disk and the label, plus any image sticking out of
+// them (up to a limit), so every resize handle can be reached.
+const MAX_OVERHANG_MM = 30;
+
+function editorBounds() {
+  const base = unionBounds(floppyBounds(format), labelBounds(geometry));
+  const limit = {
+    x: base.x - MAX_OVERHANG_MM,
+    y: base.y - MAX_OVERHANG_MM,
+    width: base.width + MAX_OVERHANG_MM * 2,
+    height: base.height + MAX_OVERHANG_MM * 2,
+  };
+  let bounds = base;
+  for (const layer of layers.all) {
+    if (!layer.object.visible) continue;
+    const points = layer.object.getCoords();
+    const xs = points.map((p) => p.x);
+    const ys = points.map((p) => p.y);
+    const x = Math.max(limit.x, Math.min(...xs));
+    const y = Math.max(limit.y, Math.min(...ys));
+    const right = Math.min(limit.x + limit.width, Math.max(...xs));
+    const bottom = Math.min(limit.y + limit.height, Math.max(...ys));
+    bounds = unionBounds(bounds, { x, y, width: right - x, height: bottom - y });
+  }
+  return bounds;
+}
 
 function unionBounds(a, b) {
   const x = Math.min(a.x, b.x);

@@ -130,25 +130,25 @@
           <div class="image-slot" id="background-slot">
             <p class="group-caption" data-i18n="images.background"></p>
             <div class="field-row">
-              <button data-image-action="open" data-i18n="images.open"></button>
+              <button data-image-action="add" data-i18n="images.add"></button>
               <button data-image-action="remove" data-i18n="images.remove"></button>
             </div>
-            <div class="field-row slider-row">
-              <label for="bg-zoom" data-i18n="images.zoom"></label>
-              <input id="bg-zoom" type="range" min="100" max="400" step="1" value="100">
-              <span class="slider-value" id="bg-zoom-value"></span>
-            </div>
-            <div class="field-row">
-              <button id="bg-reset" data-i18n="images.resetFraming"></button>
+            <p class="slot-target"></p>
+            <div class="field-row fill-row">
+              <span data-i18n="images.fill"></span>
+              <button data-fill="label" data-i18n="images.fillLabel" data-i18n-title="images.fillHint"></button>
+              <button data-fill="front" data-i18n="images.fillFront" data-i18n-title="images.fillHint"></button>
+              <button data-fill="back" data-i18n="images.fillBack" data-i18n-title="images.fillHint"></button>
             </div>
           </div>
 
           <div class="image-slot" id="logo-slot">
             <p class="group-caption" data-i18n="images.logo"></p>
             <div class="field-row">
-              <button data-image-action="open" data-i18n="images.open"></button>
+              <button data-image-action="add" data-i18n="images.add"></button>
               <button data-image-action="remove" data-i18n="images.remove"></button>
             </div>
+            <p class="slot-target"></p>
             <div class="effect-grid">
               <span class="effect-toggle">
                 <input id="logo-outline" type="checkbox" data-effect="outline.enabled">
@@ -255,6 +255,10 @@
         <div class="field-row" id="export-cutline-row">
           <input id="export-cutline" type="checkbox" checked>
           <label for="export-cutline" data-i18n="exportDialog.cutLine"></label>
+        </div>
+        <div class="field-row" id="export-foldlines-row">
+          <input id="export-foldlines" type="checkbox" checked>
+          <label for="export-foldlines" data-i18n="exportDialog.foldLines"></label>
         </div>
 
         <p class="export-note" data-i18n="exportDialog.printNote"></p>

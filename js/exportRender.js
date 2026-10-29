@@ -2,12 +2,14 @@
 // raster, laid out as the physical strip (back zone turned 180°).
 import { StaticCanvas } from '../vendor/fabric-7.4.0/index.min.mjs';
 import { pxPerMm } from './units.js';
+import { createClipPath } from './labelView.js';
 
 /**
- * objects: the label base and the layer objects, bottom to top.
+ * items: [{ object, clip }] bottom to top: the label base and the layers.
+ * clip: null = no clip (runs into the bleed), or rect(s) in world mm.
  * Returns a <canvas> covering geometry.bleed at `dpi`.
  */
-export async function renderLabel({ objects, geometry, dpi, onProgress = () => {} }) {
+export async function renderLabel({ items, geometry, dpi, onProgress = () => {} }) {
   // Text layers (Phase 5) need their fonts before rasterizing.
   await document.fonts.ready;
 
@@ -25,12 +27,12 @@ export async function renderLabel({ objects, geometry, dpi, onProgress = () => {
   });
   staticCanvas.setViewportTransform([scale, 0, 0, scale, -area.x * scale, -area.y * scale]);
 
-  // Clones, so the editor is untouched. No clip: content runs into the bleed.
-  // No caching: Fabric caps cache size, which would blur large renders.
-  const visible = objects.filter((object) => object.visible);
-  for (const [i, object] of visible.entries()) {
+  // Clones, so the editor is untouched. No caching: Fabric caps cache size,
+  // which would blur large renders.
+  const visible = items.filter(({ object }) => object.visible);
+  for (const [i, { object, clip }] of visible.entries()) {
     const clone = await object.clone();
-    clone.set({ clipPath: null, objectCaching: false });
+    clone.set({ clipPath: clip ? createClipPath(clip) : null, objectCaching: false });
     staticCanvas.add(clone);
     onProgress((i + 1) / visible.length);
   }

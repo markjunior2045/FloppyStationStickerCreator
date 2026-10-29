@@ -1,5 +1,6 @@
 // Layer store: the user's content (background, logo; text later), bottom to top.
-// Each layer owns one Fabric object, clipped to the label's cut line.
+// Each layer owns one Fabric object, clipped to the label's cut line or, when
+// it was filled into one zone (layer.zone = 'front' | 'back'), to that zone.
 import { createClipPath } from './labelView.js';
 
 // Selection look shared by every layer, theme-neutral.
@@ -10,7 +11,7 @@ export const LAYER_OBJECT_PROPS = {
   cornerColor: '#ffffff',
   cornerStrokeColor: '#000080',
   cornerStyle: 'rect',
-  cornerSize: 8,
+  cornerSize: 10,
   transparentCorners: false,
   borderScaleFactor: 1,
   lockScalingFlip: true,
@@ -28,7 +29,8 @@ export const newLayerId = () => `layer-${nextId++}`;
  */
 export function createLayerStore(canvas, hooks) {
   let layers = [];
-  let clipRect = null;
+  // layer -> rect(s) to clip to, set by the editor (it depends on the view).
+  let clipFor = () => null;
   let interactive = true;
 
   function restack() {
@@ -43,6 +45,12 @@ export function createLayerStore(canvas, hooks) {
     layer.object.evented = on;
   }
 
+  function applyClip(layer) {
+    const shape = clipFor(layer);
+    layer.object.clipPath = shape ? createClipPath(shape) : null;
+    layer.object.dirty = true;
+  }
+
   function changed() {
     restack();
     hooks.onChange();
@@ -55,7 +63,7 @@ export function createLayerStore(canvas, hooks) {
     byType: (type) => layers.filter((layer) => layer.type === type),
 
     add(layer, index = layers.length) {
-      layer.object.clipPath = clipRect ? createClipPath(clipRect) : null;
+      applyClip(layer);
       layers.splice(index, 0, layer);
       canvas.add(layer.object);
       applyInteractivity(layer);
@@ -97,10 +105,16 @@ export function createLayerStore(canvas, hooks) {
       changed();
     },
 
-    /** Clip every layer to a shape (the cut line, or one zone in the back view). */
-    setClip(rect) {
-      clipRect = rect;
-      for (const layer of layers) layer.object.clipPath = createClipPath(rect);
+    /** Sets how each layer is clipped and re-applies it to all layers. */
+    setClipResolver(resolver) {
+      clipFor = resolver;
+      layers.forEach(applyClip);
+      canvas.requestRenderAll();
+    },
+
+    /** Re-applies the clip of one layer (after its zone changed). */
+    refreshClip(layer) {
+      applyClip(layer);
       canvas.requestRenderAll();
     },
 

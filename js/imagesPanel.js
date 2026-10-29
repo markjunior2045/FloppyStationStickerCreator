@@ -1,7 +1,10 @@
-// Images group box: background and logo slots.
+// Images group box: add backgrounds and logos (any number of each). The other
+// buttons act on the "target" of each kind: the selected layer if it's of that
+// kind, otherwise the top one.
 import { acceptImageDrops, pickImageFile } from './images.js';
 import { LOGO_EFFECT_LIMITS } from './logoEffects.js';
 import { formatMm } from './units.js';
+import { t } from './strings.js';
 
 const NUMBER_LIMITS = {
   'outline.width': LOGO_EFFECT_LIMITS.outlineWidth,
@@ -11,10 +14,9 @@ const NUMBER_LIMITS = {
 
 /**
  * handlers: {
- *   onOpen(type, file)         a file was picked or dropped for 'background' | 'logo'
- *   onRemove(type)
- *   onBackgroundZoom(zoom, commit)   zoom >= 1; commit = slider released
- *   onBackgroundReset()
+ *   onAdd(type, file)          a file was picked or dropped for 'background' | 'logo'
+ *   onRemove(type)             remove the target of that type
+ *   onFill(area)               cover 'label' | 'front' | 'back' with the target background
  *   onLogoEffect(path, value, commit)   e.g. ('outline.width', 0.5, true)
  * }
  */
@@ -25,22 +27,18 @@ export function initImagesPanel(root, handlers) {
   };
 
   for (const [type, slot] of Object.entries(slots)) {
-    slot.querySelector('[data-image-action="open"]').addEventListener('click', async () => {
+    slot.querySelector('[data-image-action="add"]').addEventListener('click', async () => {
       const file = await pickImageFile(type === 'logo' ? 'image/png,image/webp,image/gif,image/*' : 'image/*');
-      if (file) handlers.onOpen(type, file);
+      if (file) handlers.onAdd(type, file);
     });
     slot.querySelector('[data-image-action="remove"]').addEventListener('click', () => handlers.onRemove(type));
-    acceptImageDrops(slot, (file) => handlers.onOpen(type, file));
+    acceptImageDrops(slot, (file) => handlers.onAdd(type, file));
   }
 
-  const zoom = root.querySelector('#bg-zoom');
-  const zoomValue = root.querySelector('#bg-zoom-value');
-  zoom.addEventListener('input', () => {
-    zoomValue.textContent = `${zoom.value}%`;
-    handlers.onBackgroundZoom(zoom.value / 100, false);
-  });
-  zoom.addEventListener('change', () => handlers.onBackgroundZoom(zoom.value / 100, true));
-  root.querySelector('#bg-reset').addEventListener('click', handlers.onBackgroundReset);
+  const fillButtons = [...root.querySelectorAll('[data-fill]')];
+  for (const button of fillButtons) {
+    button.addEventListener('click', () => handlers.onFill(button.dataset.fill));
+  }
 
   const effectInputs = [...root.querySelectorAll('[data-effect]')];
   let effects = null;
@@ -62,10 +60,22 @@ export function initImagesPanel(root, handlers) {
     }
   }
 
+  function syncTarget(type, target) {
+    const slot = slots[type];
+    slot.querySelector('[data-image-action="remove"]').disabled = !target;
+    slot.querySelector('.slot-target').textContent = target ? t('images.editing', { name: target.name }) : '';
+  }
+
   return {
-    /** state: { background: { zoom } | null, logo: { effects } | null } */
+    /** state: { background: { name } | null, logo: { name, effects } | null, wrap: bool } */
     sync(state) {
-      slots.logo.querySelector('[data-image-action="remove"]').disabled = !state.logo;
+      syncTarget('background', state.background);
+      syncTarget('logo', state.logo);
+
+      for (const button of fillButtons) {
+        button.disabled = !state.background || (button.dataset.fill !== 'label' && !state.wrap);
+      }
+
       effects = state.logo?.effects ?? null;
       for (const input of effectInputs) {
         input.disabled = !effects;
@@ -75,13 +85,6 @@ export function initImagesPanel(root, handlers) {
         else if (input.type === 'color') input.value = value;
         else input.value = formatMm(value);
       }
-      const bg = state.background;
-      slots.background.querySelector('[data-image-action="remove"]').disabled = !bg;
-      zoom.disabled = !bg;
-      root.querySelector('#bg-reset').disabled = !bg;
-      const percent = bg ? Math.round(bg.zoom * 100) : 100;
-      if (document.activeElement !== zoom) zoom.value = String(percent);
-      zoomValue.textContent = `${percent}%`;
     },
   };
 }

@@ -58,7 +58,7 @@ export function initLayerList(root, handlers) {
 
         const name = document.createElement('span');
         name.className = 'layer-name';
-        name.textContent = layer.name;
+        name.textContent = layer.zone ? `${layer.name} (${t(`layerList.zone.${layer.zone}`)})` : layer.name;
 
         row.append(box, boxLabel, name);
         list.append(row);

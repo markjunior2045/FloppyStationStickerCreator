@@ -191,6 +191,27 @@ export function backViewZone(geometry) {
   return geometry.content.find((zone) => zone.id === 'back') ?? null;
 }
 
+/**
+ * Area a background should cover to fill part of the label, including the
+ * bleed where that edge is a cut edge:
+ * - 'label': the whole bleed area
+ * - 'front': the front zone; in wrap-around its top is the spine fold
+ * - 'back': the back zone (wrap-around); its top is the fold and its bottom
+ *   sits against the spine, so only the sides get bleed
+ */
+export function fillArea(geometry, which) {
+  const { bleed, outline } = geometry;
+  const zone = geometry.content.find((z) => z.id === which);
+  if (which === 'label' || !zone) return bleed;
+  const b = outline.x - bleed.x;
+  const wrap = geometry.folds.length > 0;
+  if (which === 'front') {
+    const top = wrap ? zone.y : zone.y - b;
+    return { x: bleed.x, y: top, width: bleed.width, height: zone.y + zone.height + b - top };
+  }
+  return { x: bleed.x, y: zone.y, width: bleed.width, height: zone.height };
+}
+
 export function labelBounds(geometry) {
   const { x, y, width, height } = geometry.bleed;
   return { x, y, width, height };

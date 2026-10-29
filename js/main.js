@@ -21,6 +21,7 @@ import { enableCenterSnapping } from './snapping.js';
 import { acceptImageDrops, loadImage, readFileAsDataUrl } from './images.js';
 import { formatMm, SCREEN_PX_PER_MM } from './units.js';
 import { createViewport } from './viewport.js';
+import { renderLabel } from './exportRender.js';
 
 applyStrings();
 document.title = t('appTitle');
@@ -411,5 +412,5 @@ history.commit();
 
 // ?debug exposes internals for manual testing in the console.
 if (new URLSearchParams(location.search).has('debug')) {
-  window.app = { canvas, layers, viewport, history, get settings() { return settings; }, get geometry() { return geometry; } };
+  window.app = { canvas, layers, viewport, history, labelView, renderLabel, get settings() { return settings; }, get geometry() { return geometry; } };
 }

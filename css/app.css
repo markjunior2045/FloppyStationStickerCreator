@@ -4,12 +4,30 @@
 :root {
   --desktop-bg: #008080;
   --surface: #c0c0c0;
+  --menu-bg: #c0c0c0;
   --menu-highlight-bg: #000080;
   --menu-highlight-fg: #ffffff;
   --menu-disabled-fg: #808080;
   --menu-disabled-shadow: #ffffff;
+  --progress-color: #000080;
   /* Neutral gray in every theme, for color judgment. */
   --canvas-area-bg: #808080;
+}
+
+/* Per-theme overrides. */
+:root[data-theme="xp"] {
+  --desktop-bg: #3a6ea5;
+  --surface: #ece9d8;
+  --menu-bg: #ffffff;
+  --menu-highlight-bg: #316ac5;
+  --menu-disabled-fg: #aca899;
+  --menu-disabled-shadow: transparent;
+  --progress-color: #37b737;
+}
+
+:root[data-theme="xp"] .menu-popup {
+  border: 1px solid #aca899;
+  box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.3);
 }
 
 *, *::before, *::after {
@@ -351,7 +369,7 @@ body {
   margin: 0;
   padding: 3px;
   list-style: none;
-  background: var(--surface);
+  background: var(--menu-bg);
   box-shadow:
     inset -1px -1px #0a0a0a,
     inset 1px 1px #dfdfdf,
@@ -363,19 +381,49 @@ body {
   display: block;
 }
 
-.menu-popup [role="menuitem"] {
+.menu-popup [role^="menuitem"] {
   width: 100%;
   padding: 3px 20px;
   white-space: nowrap;
 }
 
-.menu-popup [role="menuitem"]:not(:disabled):hover,
-.menu-popup [role="menuitem"]:not(:disabled):focus-visible {
+/* Radio items: a dot before the checked one. */
+.menu-popup [role="menuitemradio"][aria-checked="true"]::before {
+  content: "\25CF";
+  position: absolute;
+  margin-left: -14px;
+  font-size: 8px;
+  line-height: 14px;
+}
+
+.has-submenu {
+  position: relative;
+}
+
+.has-submenu > [role="menuitem"]::after {
+  content: "\25B8";
+  float: right;
+  margin-right: -12px;
+}
+
+.menu-popup .submenu {
+  top: -3px;
+  left: 100%;
+}
+
+.has-submenu:hover > .submenu,
+.has-submenu:focus-within > .submenu {
+  display: block;
+}
+
+.menu-popup [role^="menuitem"]:not(:disabled):hover,
+.menu-popup [role^="menuitem"]:not(:disabled):focus-visible,
+.has-submenu:hover > [role="menuitem"] {
   background: var(--menu-highlight-bg);
   color: var(--menu-highlight-fg);
 }
 
-.menu-popup [role="menuitem"]:disabled {
+.menu-popup [role^="menuitem"]:disabled {
   color: var(--menu-disabled-fg);
   text-shadow: 1px 1px 0 var(--menu-disabled-shadow);
 }
@@ -517,7 +565,7 @@ body {
 .progress-bar {
   width: 0;
   height: 100%;
-  background: repeating-linear-gradient(90deg, var(--menu-highlight-bg) 0 8px, transparent 8px 10px);
+  background: repeating-linear-gradient(90deg, var(--progress-color) 0 8px, transparent 8px 10px);
   transition: width 0.15s;
 }
 

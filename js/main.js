@@ -1,6 +1,7 @@
 import { Canvas, FabricObject } from '../vendor/fabric-7.4.0/index.min.mjs';
 import { applyStrings, t } from './strings.js';
 import { initMenuBar } from './menu.js';
+import { applyTheme, currentTheme } from './theme.js';
 import { DEFAULT_FORMAT } from './formats.js';
 import { createFloppyObjects, floppyBounds } from './floppy.js';
 import {
@@ -609,10 +610,24 @@ const actions = {
   'side-front': () => setSide('front'),
   'side-back': () => setSide('back'),
   export: () => exportDialog.open(),
+  'theme-98': () => setTheme('98'),
+  'theme-xp': () => setTheme('xp'),
   undo: () => history.undo(),
   redo: () => history.redo(),
   reset: () => resetDocument(),
 };
+
+function setTheme(id) {
+  applyTheme(id);
+  syncThemeMenu();
+}
+
+function syncThemeMenu() {
+  const theme = currentTheme();
+  for (const item of document.querySelectorAll('[data-action^="theme-"]')) {
+    item.setAttribute('aria-checked', String(item.dataset.action === `theme-${theme}`));
+  }
+}
 
 function runAction(action) {
   if (actions[action]) actions[action]();
@@ -629,6 +644,7 @@ for (const el of document.querySelectorAll('.zoom-toolbar, .sidebar')) {
 
 updateSettings({});
 history.commit();
+syncThemeMenu();
 
 // ?debug exposes internals for manual testing in the console.
 if (new URLSearchParams(location.search).has('debug')) {

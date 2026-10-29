@@ -20,6 +20,10 @@ export const STRINGS = {
     fit: 'Fit to window',
     sideFront: 'Disk front (edit)',
     sideBack: 'Disk back (preview)',
+    theme: 'Theme',
+    // Style names: the only place the OS name appears, as allowed in CLAUDE.md.
+    theme98: 'Windows 98',
+    themeXp: 'Windows XP',
     help: 'Help',
     about: 'About',
   },

@@ -6,6 +6,15 @@
   <title>FloppyStation Sticker Creator</title>
   <link rel="icon" href="data:,">
   <link id="theme-css" rel="stylesheet" href="vendor/98.css-0.1.21/98.css">
+  <script>
+    // Apply the remembered theme before first paint (js/theme.js owns the key).
+    try {
+      if (localStorage.getItem('fssc.theme') === 'xp') {
+        document.getElementById('theme-css').href = 'vendor/xp.css-0.2.6/XP.css';
+        document.documentElement.dataset.theme = 'xp';
+      }
+    } catch (error) { /* storage blocked: default theme */ }
+  </script>
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/app.css">
 </head>
@@ -45,6 +54,14 @@
           <li role="separator" class="menu-separator"></li>
           <li role="none"><button role="menuitem" data-action="side-front" data-i18n="menu.sideFront"></button></li>
           <li role="none"><button role="menuitem" data-action="side-back" data-i18n="menu.sideBack"></button></li>
+          <li role="separator" class="menu-separator"></li>
+          <li role="none" class="has-submenu">
+            <button role="menuitem" aria-haspopup="true" data-i18n="menu.theme"></button>
+            <ul class="menu-popup submenu" role="menu">
+              <li role="none"><button role="menuitemradio" aria-checked="false" data-action="theme-98" data-i18n="menu.theme98"></button></li>
+              <li role="none"><button role="menuitemradio" aria-checked="false" data-action="theme-xp" data-i18n="menu.themeXp"></button></li>
+            </ul>
+          </li>
         </ul>
       </div>
       <div class="menu">

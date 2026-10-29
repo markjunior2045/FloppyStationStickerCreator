@@ -25,8 +25,9 @@ export function initMenuBar(menuBar, onAction) {
   }
 
   menuBar.addEventListener('click', (event) => {
-    const item = event.target.closest('[role="menuitem"]');
-    if (!item || item.disabled) return;
+    const item = event.target.closest('[role^="menuitem"]');
+    // Submenu titles only open their submenu (on hover/focus).
+    if (!item || item.disabled || item.hasAttribute('aria-haspopup')) return;
     setOpen(null);
     onAction(item.dataset.action);
   });

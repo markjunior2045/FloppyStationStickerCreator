@@ -50,9 +50,34 @@
     </nav>
 
     <div class="window-body app-body">
-      <div class="canvas-area">
-        <canvas id="label-canvas"></canvas>
-      </div>
+      <aside class="sidebar">
+        <fieldset>
+          <legend data-i18n="groups.floppy"></legend>
+          <p class="placeholder" data-i18n="groups.notYet"></p>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="groups.images"></legend>
+          <p class="placeholder" data-i18n="groups.notYet"></p>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="groups.text"></legend>
+          <p class="placeholder" data-i18n="groups.notYet"></p>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="groups.style"></legend>
+          <p class="placeholder" data-i18n="groups.notYet"></p>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="groups.export"></legend>
+          <p class="placeholder" data-i18n="groups.notYet"></p>
+        </fieldset>
+      </aside>
+
+      <main class="workspace">
+        <div class="canvas-scroll">
+          <canvas id="label-canvas"></canvas>
+        </div>
+      </main>
     </div>
 
     <div class="status-bar">

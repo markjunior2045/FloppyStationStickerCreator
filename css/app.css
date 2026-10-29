@@ -38,6 +38,38 @@ body {
 .app-body {
   flex: 1;
   min-height: 0;
+  display: flex;
+  gap: 8px;
+}
+
+/* ---- Left column: controls in group boxes ---- */
+
+.sidebar {
+  flex: none;
+  width: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar fieldset {
+  margin: 0;
+}
+
+.placeholder {
+  margin: 0;
+  color: var(--menu-disabled-fg);
+}
+
+/* ---- Right column: canvas ---- */
+
+.workspace {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 /* ---- Menu bar ---- */
@@ -119,10 +151,16 @@ body {
 
 /* ---- Canvas area ---- */
 
-.canvas-area {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
+/* Sunken frame around a scrollable area; the canvas inside is sized by JS. */
+.canvas-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 2px;
   background: var(--canvas-area-bg);
+  box-shadow:
+    inset -1px -1px #ffffff,
+    inset 1px 1px #808080,
+    inset -2px -2px #dfdfdf,
+    inset 2px 2px #0a0a0a;
 }

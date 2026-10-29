@@ -20,6 +20,14 @@ export const STRINGS = {
     help: 'Help',
     about: 'About',
   },
+  groups: {
+    floppy: 'Floppy',
+    images: 'Images',
+    text: 'Text',
+    style: 'Style',
+    export: 'Export',
+    notYet: 'Not available yet.',
+  },
 };
 
 export function t(key) {

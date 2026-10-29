@@ -67,7 +67,7 @@
       <div class="menu">
         <button class="menu-title" aria-haspopup="true" aria-expanded="false" data-i18n="menu.help"></button>
         <ul class="menu-popup" role="menu">
-          <li role="none"><button role="menuitem" data-action="about" disabled data-i18n="menu.about"></button></li>
+          <li role="none"><button role="menuitem" data-action="about" data-i18n="menu.about"></button></li>
         </ul>
       </div>
     </nav>
@@ -373,6 +373,28 @@
           <button id="export-cancel" type="button" data-i18n="exportDialog.cancel"></button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="about-dialog" hidden>
+    <div class="window about-dialog" role="dialog" aria-modal="true" aria-labelledby="about-title">
+      <div class="title-bar">
+        <div class="title-bar-text" id="about-title" data-i18n="about.title"></div>
+        <div class="title-bar-controls">
+          <button aria-label="Close" type="button"></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <p class="about-name" data-i18n="appTitle"></p>
+        <p data-i18n="about.version"></p>
+        <p data-i18n="about.description"></p>
+        <p data-i18n="about.privacy"></p>
+        <p data-i18n="about.credits"></p>
+        <p><a href="https://github.com/markjunior2045/FloppyStationStickerCreator" target="_blank" rel="noopener" data-i18n="about.source"></a></p>
+        <div class="field-row dialog-buttons">
+          <button type="button" class="default" data-close data-i18n="about.ok"></button>
+        </div>
+      </div>
     </div>
   </div>
 

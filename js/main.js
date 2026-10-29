@@ -732,6 +732,7 @@ const actions = {
   'side-front': () => setSide('front'),
   'side-back': () => setSide('back'),
   export: () => exportDialog.open('pdf'),
+  about: () => openAbout(),
   save: () => exportDialog.open('json'),
   open: () => openProject(),
   new: () => resetDocument(),
@@ -741,6 +742,18 @@ const actions = {
   redo: () => history.redo(),
   reset: () => resetDocument(),
 };
+
+const aboutDialog = document.getElementById('about-dialog');
+function openAbout() {
+  aboutDialog.hidden = false;
+  aboutDialog.querySelector('[data-close]').focus();
+}
+for (const button of aboutDialog.querySelectorAll('[data-close], [aria-label="Close"]')) {
+  button.addEventListener('click', () => { aboutDialog.hidden = true; });
+}
+aboutDialog.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' || event.key === 'Enter') aboutDialog.hidden = true;
+});
 
 function setTheme(id) {
   applyTheme(id);
@@ -769,7 +782,7 @@ for (const el of document.querySelectorAll('.zoom-toolbar, .sidebar')) {
 
 initShortcuts({
   runAction,
-  blocked: () => !document.getElementById('export-dialog').hidden,
+  blocked: () => !document.getElementById('export-dialog').hidden || !aboutDialog.hidden,
   deleteSelection: () => {
     const layer = layers.byId(listSelection);
     if (!layer || side === 'back') return;

@@ -1,8 +1,11 @@
-// Phase 0 hello world: proves Fabric.js loads as an ES module and draws
-// a 71 x 71 mm label with 2.5 mm corners at real scale.
-import { Canvas, Rect, version } from '../vendor/fabric-7.4.0/index.min.mjs';
+import { Canvas, Path } from '../vendor/fabric-7.4.0/index.min.mjs';
 import { applyStrings, t } from './strings.js';
 import { initMenuBar } from './menu.js';
+import { DEFAULT_FORMAT } from './formats.js';
+import { createFloppyObjects, floppyBounds } from './floppy.js';
+import { allCorners, rectPath } from './shapes.js';
+import { formatMm } from './units.js';
+import { createViewport } from './viewport.js';
 
 applyStrings();
 document.title = t('appTitle');
@@ -10,34 +13,35 @@ initMenuBar(document.querySelector('.menu-bar'), (action) => {
   console.info(`Menu action not implemented yet: ${action}`);
 });
 
-const CSS_PX_PER_MM = 96 / 25.4;
-const ZOOM = 2;
-const mmToPx = (mm) => mm * CSS_PX_PER_MM * ZOOM;
-
-const LABEL = { width: 71.0, height: 71.0, cornerRadius: 2.5 };
-const PADDING_MM = 5;
+const format = DEFAULT_FORMAT;
 
 const canvas = new Canvas('label-canvas', {
-  width: mmToPx(LABEL.width + PADDING_MM * 2),
-  height: mmToPx(LABEL.height + PADDING_MM * 2),
-  backgroundColor: '#808080',
+  backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--canvas-area-bg').trim(),
+  selection: false,
 });
 
-canvas.add(new Rect({
+canvas.add(...createFloppyObjects(format));
+
+// Placeholder label (front only, 4 rounded corners) until the label model lands.
+const label = format.label;
+const labelX = (format.body.width - label.width) / 2;
+canvas.add(new Path(rectPath(label.width, label.frontOnlyHeight, allCorners('round', label.cornerRadius)), {
   originX: 'left',
   originY: 'top',
-  left: mmToPx(PADDING_MM),
-  top: mmToPx(PADDING_MM),
-  width: mmToPx(LABEL.width),
-  height: mmToPx(LABEL.height),
-  rx: mmToPx(LABEL.cornerRadius),
-  ry: mmToPx(LABEL.cornerRadius),
+  left: labelX,
+  top: 0,
   fill: '#ffffff',
-  stroke: '#000000',
-  strokeWidth: 1,
-  strokeUniform: true,
+  selectable: false,
+  evented: false,
+  objectCaching: false,
 }));
 
+const viewport = createViewport(
+  canvas,
+  document.querySelector('.canvas-scroll'),
+  () => floppyBounds(format),
+);
+viewport.layout();
+
 document.getElementById('status-label').textContent =
-  `Label: ${LABEL.width} × ${LABEL.height} mm, r ${LABEL.cornerRadius} mm, zoom ${ZOOM * 100}%`;
-document.getElementById('status-lib').textContent = `Fabric.js ${version}`;
+  `${format.name} · label ${formatMm(label.width)} × ${formatMm(label.frontOnlyHeight)} mm`;

@@ -1,6 +1,14 @@
 // Phase 0 hello world: proves Fabric.js loads as an ES module and draws
 // a 71 x 71 mm label with 2.5 mm corners at real scale.
 import { Canvas, Rect, version } from '../vendor/fabric-7.4.0/index.min.mjs';
+import { applyStrings, t } from './strings.js';
+import { initMenuBar } from './menu.js';
+
+applyStrings();
+document.title = t('appTitle');
+initMenuBar(document.querySelector('.menu-bar'), (action) => {
+  console.info(`Menu action not implemented yet: ${action}`);
+});
 
 const CSS_PX_PER_MM = 96 / 25.4;
 const ZOOM = 2;

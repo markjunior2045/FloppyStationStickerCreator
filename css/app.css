@@ -1,21 +1,128 @@
-/* App-specific styles. Theme-neutral; per-theme overrides go below their own selector. */
+/* App-specific styles, shared by both themes.
+   Theme colors are tokens on :root; per-theme overrides go at the end. */
+
+:root {
+  --desktop-bg: #008080;
+  --surface: #c0c0c0;
+  --menu-highlight-bg: #000080;
+  --menu-highlight-fg: #ffffff;
+  --menu-disabled-fg: #808080;
+  --menu-disabled-shadow: #ffffff;
+  /* Neutral gray in every theme, for color judgment. */
+  --canvas-area-bg: #808080;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
 
 body {
   margin: 0;
-  padding: 16px;
-  background: #008080;
+  padding: 8px;
+  overflow: hidden;
+  background: var(--desktop-bg);
 }
+
+/* ---- App window ---- */
 
 .app-window {
-  max-width: 960px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-/* Neutral gray in every theme, for color judgment. */
+.app-body {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---- Menu bar ---- */
+
+.menu-bar {
+  display: flex;
+  padding: 1px 2px;
+  user-select: none;
+}
+
+.menu {
+  position: relative;
+}
+
+/* :where() keeps this reset at low specificity so the rules below win. */
+.menu-bar :where(button) {
+  all: unset;
+  display: block;
+  font: inherit;
+  color: inherit;
+  cursor: default;
+}
+
+.menu-title {
+  padding: 3px 7px;
+}
+
+.menu-title:focus-visible,
+.menu.open .menu-title {
+  background: var(--menu-highlight-bg);
+  color: var(--menu-highlight-fg);
+}
+
+.menu-popup {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  min-width: 180px;
+  margin: 0;
+  padding: 3px;
+  list-style: none;
+  background: var(--surface);
+  box-shadow:
+    inset -1px -1px #0a0a0a,
+    inset 1px 1px #dfdfdf,
+    inset -2px -2px #808080,
+    inset 2px 2px #ffffff;
+}
+
+.menu.open .menu-popup {
+  display: block;
+}
+
+.menu-popup [role="menuitem"] {
+  width: 100%;
+  padding: 3px 20px;
+  white-space: nowrap;
+}
+
+.menu-popup [role="menuitem"]:not(:disabled):hover,
+.menu-popup [role="menuitem"]:not(:disabled):focus-visible {
+  background: var(--menu-highlight-bg);
+  color: var(--menu-highlight-fg);
+}
+
+.menu-popup [role="menuitem"]:disabled {
+  color: var(--menu-disabled-fg);
+  text-shadow: 1px 1px 0 var(--menu-disabled-shadow);
+}
+
+.menu-separator {
+  height: 0;
+  margin: 3px 1px;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #ffffff;
+}
+
+/* ---- Canvas area ---- */
+
 .canvas-area {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 480px;
-  background: #808080;
+  height: 100%;
+  background: var(--canvas-area-bg);
 }

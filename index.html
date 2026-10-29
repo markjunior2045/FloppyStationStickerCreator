@@ -35,10 +35,10 @@
       <div class="menu">
         <button class="menu-title" aria-haspopup="true" aria-expanded="false" data-i18n="menu.view"></button>
         <ul class="menu-popup" role="menu">
-          <li role="none"><button role="menuitem" data-action="zoom-in" disabled data-i18n="menu.zoomIn"></button></li>
-          <li role="none"><button role="menuitem" data-action="zoom-out" disabled data-i18n="menu.zoomOut"></button></li>
-          <li role="none"><button role="menuitem" data-action="zoom-100" disabled data-i18n="menu.actualSize"></button></li>
-          <li role="none"><button role="menuitem" data-action="zoom-fit" disabled data-i18n="menu.fit"></button></li>
+          <li role="none"><button role="menuitem" data-action="zoom-in" data-i18n="menu.zoomIn"></button></li>
+          <li role="none"><button role="menuitem" data-action="zoom-out" data-i18n="menu.zoomOut"></button></li>
+          <li role="none"><button role="menuitem" data-action="zoom-100" data-i18n="menu.actualSize"></button></li>
+          <li role="none"><button role="menuitem" data-action="zoom-fit" data-i18n="menu.fit"></button></li>
         </ul>
       </div>
       <div class="menu">
@@ -74,6 +74,13 @@
       </aside>
 
       <main class="workspace">
+        <div class="zoom-toolbar">
+          <button data-action="zoom-fit" data-i18n="zoom.fit" data-i18n-title="menu.fit"></button>
+          <button data-action="zoom-100" data-i18n="zoom.actual" data-i18n-title="menu.actualSize"></button>
+          <button data-action="zoom-out" class="zoom-step" data-i18n="zoom.out" data-i18n-title="menu.zoomOut"></button>
+          <button data-action="zoom-in" class="zoom-step" data-i18n="zoom.in" data-i18n-title="menu.zoomIn"></button>
+          <span class="zoom-readout" id="zoom-readout"></span>
+        </div>
         <div class="canvas-scroll">
           <canvas id="label-canvas"></canvas>
         </div>
@@ -81,7 +88,7 @@
     </div>
 
     <div class="status-bar">
-      <p class="status-bar-field" id="status-label">Label: —</p>
+      <p class="status-bar-field" id="status-label"></p>
       <p class="status-bar-field" id="status-zoom"></p>
     </div>
   </div>

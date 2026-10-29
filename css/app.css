@@ -151,6 +151,26 @@ body {
 
 /* ---- Canvas area ---- */
 
+.zoom-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.zoom-toolbar button {
+  min-width: 0;
+  padding: 0 10px;
+}
+
+.zoom-toolbar .zoom-step {
+  min-width: 28px;
+  padding: 0;
+}
+
+.zoom-readout {
+  margin-left: 4px;
+}
+
 /* Sunken frame around a scrollable area; the canvas inside is sized by JS. */
 .canvas-scroll {
   flex: 1;

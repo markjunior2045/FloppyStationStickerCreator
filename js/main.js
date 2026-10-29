@@ -9,9 +9,6 @@ import { createViewport } from './viewport.js';
 
 applyStrings();
 document.title = t('appTitle');
-initMenuBar(document.querySelector('.menu-bar'), (action) => {
-  console.info(`Menu action not implemented yet: ${action}`);
-});
 
 const format = DEFAULT_FORMAT;
 
@@ -36,12 +33,42 @@ canvas.add(new Path(rectPath(label.width, label.frontOnlyHeight, allCorners('rou
   objectCaching: false,
 }));
 
+const zoomReadout = document.getElementById('zoom-readout');
+const zoomStatus = document.getElementById('status-zoom');
+
 const viewport = createViewport(
   canvas,
   document.querySelector('.canvas-scroll'),
   () => floppyBounds(format),
+  ({ mode, zoom }) => {
+    const percent = Math.round(zoom * 100);
+    zoomReadout.textContent = `${percent}%`;
+    zoomStatus.textContent = t(mode === 'fit' ? 'zoom.statusFit' : 'zoom.status', { percent });
+  },
 );
+
+const actions = {
+  'zoom-in': () => viewport.zoomIn(),
+  'zoom-out': () => viewport.zoomOut(),
+  'zoom-100': () => viewport.setZoom(1),
+  'zoom-fit': () => viewport.fit(),
+};
+
+function runAction(action) {
+  if (actions[action]) actions[action]();
+  else console.info(`Action not implemented yet: ${action}`);
+}
+
+initMenuBar(document.querySelector('.menu-bar'), runAction);
+document.querySelector('.zoom-toolbar').addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-action]');
+  if (button) runAction(button.dataset.action);
+});
+
 viewport.layout();
 
-document.getElementById('status-label').textContent =
-  `${format.name} · label ${formatMm(label.width)} × ${formatMm(label.frontOnlyHeight)} mm`;
+document.getElementById('status-label').textContent = t('status.label', {
+  format: format.name,
+  width: formatMm(label.width),
+  height: formatMm(label.frontOnlyHeight),
+});

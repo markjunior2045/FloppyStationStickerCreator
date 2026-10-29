@@ -20,6 +20,17 @@ export const STRINGS = {
     help: 'Help',
     about: 'About',
   },
+  zoom: {
+    fit: 'Fit',
+    actual: '100%',
+    in: '+',
+    out: '−',
+    status: 'Zoom: {percent}%',
+    statusFit: 'Zoom: {percent}% (fit)',
+  },
+  status: {
+    label: '{format} floppy · label {width} × {height} mm',
+  },
   groups: {
     floppy: 'Floppy',
     images: 'Images',
@@ -30,13 +41,14 @@ export const STRINGS = {
   },
 };
 
-export function t(key) {
+// t('zoom.status', { percent: 100 }) fills {placeholders} from params.
+export function t(key, params = {}) {
   const value = key.split('.').reduce((node, part) => node?.[part], STRINGS);
   if (typeof value !== 'string') {
     console.warn(`Missing UI string: ${key}`);
     return key;
   }
-  return value;
+  return value.replace(/\{(\w+)\}/g, (match, name) => (name in params ? String(params[name]) : match));
 }
 
 export function applyStrings(root = document) {

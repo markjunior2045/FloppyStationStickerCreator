@@ -1,6 +1,7 @@
 // Layer store: the user's content (background, logo; text later), bottom to top.
 // Each layer owns one Fabric object, clipped to the label's cut line or, when
 // it was filled into one zone (layer.zone = 'front' | 'back'), to that zone.
+import { Control } from '../vendor/fabric-7.4.0/index.min.mjs';
 import { createClipPath } from './labelView.js';
 
 // Selection look shared by every layer, theme-neutral.
@@ -16,6 +17,28 @@ export const LAYER_OBJECT_PROPS = {
   borderScaleFactor: 1,
   lockScalingFlip: true,
 };
+
+// Fabric picks a resize cursor from the angle between the object's center and
+// the pointer, so on a wide image a corner shows a horizontal arrow. Corners
+// here always show the diagonal they sit on (turned with the object).
+const RESIZE_CURSORS = ['e', 'se', 's', 'sw', 'w', 'nw', 'n', 'ne'];
+
+function cornerCursor(eventData, control, object) {
+  if (object.lockScalingX && object.lockScalingY) return 'not-allowed';
+  const x = object.flipX ? -control.x : control.x;
+  const y = object.flipY ? -control.y : control.y;
+  const angle = (Math.atan2(y, x) * 180) / Math.PI + object.getTotalAngle();
+  const index = Math.round((((angle % 360) + 360) % 360) / 45) % 8;
+  return `${RESIZE_CURSORS[index]}-resize`;
+}
+
+function useDiagonalCornerCursors(object) {
+  const controls = { ...object.controls };
+  for (const key of ['tl', 'tr', 'bl', 'br']) {
+    if (controls[key]) controls[key] = new Control({ ...controls[key], cursorStyleHandler: cornerCursor });
+  }
+  object.controls = controls;
+}
 
 let nextId = 1;
 export const newLayerId = () => `layer-${nextId++}`;
@@ -63,6 +86,7 @@ export function createLayerStore(canvas, hooks) {
     byType: (type) => layers.filter((layer) => layer.type === type),
 
     add(layer, index = layers.length) {
+      useDiagonalCornerCursors(layer.object);
       applyClip(layer);
       layers.splice(index, 0, layer);
       canvas.add(layer.object);

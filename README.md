@@ -2,6 +2,8 @@
 
 Design printable labels for **3.5" floppy disks** with the look of an old game label, and print them at exact physical size.
 
+It was made to be used together with [Floppy Station](https://github.com/markjunior2045/FloppyStation), an app that launches your PC games from floppy disks: insert a disk, and its game starts. The Sticker Creator gives each of those disks a proper label.
+
 **Use it online:** https://markjunior2045.github.io/FloppyStationStickerCreator/
 
 Everything runs in your browser. Your images never leave your computer: there is no server, no upload, no account.

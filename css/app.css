@@ -1,0 +1,21 @@
+/* App-specific styles. Theme-neutral; per-theme overrides go below their own selector. */
+
+body {
+  margin: 0;
+  padding: 16px;
+  background: #008080;
+}
+
+.app-window {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* Neutral gray in every theme, for color judgment. */
+.canvas-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+  background: #808080;
+}

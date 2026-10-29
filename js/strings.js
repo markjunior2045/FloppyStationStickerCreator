@@ -12,6 +12,7 @@ export const STRINGS = {
     edit: 'Edit',
     undo: 'Undo',
     redo: 'Redo',
+    reset: 'Reset…',
     view: 'View',
     zoomIn: 'Zoom in',
     zoomOut: 'Zoom out',
@@ -19,6 +20,9 @@ export const STRINGS = {
     fit: 'Fit to window',
     help: 'Help',
     about: 'About',
+  },
+  edit: {
+    resetConfirm: 'Start over? This removes all layers and restores the default label. You can undo it.',
   },
   zoom: {
     fit: 'Fit',

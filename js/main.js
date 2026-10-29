@@ -13,7 +13,8 @@ import {
   backgroundZoom, constrainBackground, createBackgroundLayer, resetBackgroundFraming, setBackgroundZoom,
 } from './background.js';
 import { createLogoLayer } from './logo.js';
-import { applyLogoEffects } from './logoEffects.js';
+import { applyLogoEffects, cloneEffects } from './logoEffects.js';
+import { createHistory } from './history.js';
 import { enableCenterSnapping } from './snapping.js';
 import { acceptImageDrops, loadImage, readFileAsDataUrl } from './images.js';
 import { formatMm, SCREEN_PX_PER_MM } from './units.js';
@@ -62,12 +63,18 @@ const viewport = createViewport(
 // ---- Label settings ----
 
 const floppyPanel = initFloppyPanel(document.getElementById('floppy-panel'), {
-  onSettings: (patch) => updateSettings(patch),
+  onSettings: (patch) => {
+    updateSettings(patch);
+    history.commit();
+  },
   onGuides: (patch) => {
     labelView.setGuideVisibility(patch);
     syncPanels();
   },
-  onResetDimensions: () => updateSettings(defaultDimensions(format)),
+  onResetDimensions: () => {
+    updateSettings(defaultDimensions(format));
+    history.commit();
+  },
 });
 
 function updateSettings(patch) {
@@ -104,14 +111,16 @@ const imagesPanel = initImagesPanel(document.getElementById('images-panel'), {
   onOpen: (type, file) => openImage(type, file),
   onRemove: (type) => {
     for (const layer of layers.byType(type)) layers.remove(layer.id);
+    history.commit();
   },
-  onBackgroundZoom: (zoom) => {
+  onBackgroundZoom: (zoom, commit) => {
     const background = currentBackground();
     if (!background) return;
     setBackgroundZoom(background.object, geometry.bleed, zoom);
     canvas.requestRenderAll();
+    if (commit) history.commit();
   },
-  onLogoEffect: (path, value) => {
+  onLogoEffect: (path, value, commit) => {
     const logo = layers.byType('logo')[0];
     if (!logo) return;
     const [group, key] = path.split('.');
@@ -119,6 +128,7 @@ const imagesPanel = initImagesPanel(document.getElementById('images-panel'), {
     applyLogoEffects(logo);
     canvas.requestRenderAll();
     syncPanels();
+    if (commit) history.commit();
   },
   onBackgroundReset: () => {
     const background = currentBackground();
@@ -126,6 +136,7 @@ const imagesPanel = initImagesPanel(document.getElementById('images-panel'), {
     resetBackgroundFraming(background.object, geometry.bleed);
     canvas.requestRenderAll();
     syncPanels();
+    history.commit();
   },
 });
 
@@ -155,6 +166,7 @@ async function openImage(type, file) {
     canvas.setActiveObject(layer.object);
   }
   syncPanels();
+  history.commit();
 }
 
 acceptImageDrops(document.querySelector('.canvas-scroll'), (file) => openImage('background', file));
@@ -169,6 +181,7 @@ canvas.on('object:modified', ({ target }) => {
     canvas.requestRenderAll();
   }
   syncPanels();
+  history.commit();
 });
 
 enableCenterSnapping(canvas, {
@@ -208,9 +221,18 @@ const layerList = initLayerList(document.getElementById('layers-panel'), {
     canvas.requestRenderAll();
     syncPanels();
   },
-  onVisible: (id, visible) => layers.setVisible(id, visible),
-  onMove: (id, delta) => layers.move(id, delta),
-  onDelete: (id) => layers.remove(id),
+  onVisible: (id, visible) => {
+    layers.setVisible(id, visible);
+    history.commit();
+  },
+  onMove: (id, delta) => {
+    layers.move(id, delta);
+    history.commit();
+  },
+  onDelete: (id) => {
+    layers.remove(id);
+    history.commit();
+  },
 });
 
 function onCanvasSelection() {
@@ -232,6 +254,70 @@ function syncPanels() {
   });
 }
 
+// ---- Document snapshots, undo/redo, reset ----
+
+function captureDocument() {
+  return {
+    settings: { ...settings },
+    layers: layers.all.map((layer) => {
+      const o = layer.object;
+      return {
+        id: layer.id,
+        type: layer.type,
+        name: layer.name,
+        src: layer.src,
+        visible: o.visible,
+        transform: {
+          left: o.left, top: o.top, scaleX: o.scaleX, scaleY: o.scaleY, angle: o.angle, flipX: o.flipX, flipY: o.flipY,
+        },
+        ...(layer.effects ? { effects: cloneEffects(layer.effects) } : {}),
+      };
+    }),
+  };
+}
+
+async function restoreDocument(state) {
+  const images = await Promise.all(state.layers.map((entry) => loadImage(entry.src)));
+  const selectedId = listSelection;
+  settings = { ...state.settings };
+  layers.clear();
+  updateSettings({});
+  state.layers.forEach((entry, i) => {
+    const common = { id: entry.id, image: images[i], src: entry.src, name: entry.name };
+    const layer = entry.type === 'background'
+      ? createBackgroundLayer({ ...common, area: geometry.bleed })
+      : createLogoLayer({ ...common, geometry, effects: entry.effects });
+    layer.object.set({ ...entry.transform, visible: entry.visible });
+    if (layer.effects) applyLogoEffects(layer);
+    layer.object.setCoords();
+    layers.add(layer);
+  });
+  const selected = layers.byId(selectedId);
+  if (selected?.object.visible) canvas.setActiveObject(selected.object);
+  listSelection = selected ? selectedId : null;
+  canvas.requestRenderAll();
+  syncPanels();
+}
+
+const history = createHistory({
+  capture: captureDocument,
+  restore: restoreDocument,
+  onChange: () => syncEditMenu(),
+});
+
+function syncEditMenu() {
+  document.querySelector('[role="menuitem"][data-action="undo"]').disabled = !history.canUndo;
+  document.querySelector('[role="menuitem"][data-action="redo"]').disabled = !history.canRedo;
+}
+
+function resetDocument() {
+  if (!confirm(t('edit.resetConfirm'))) return;
+  layers.clear();
+  settings = defaultLabelSettings(format);
+  updateSettings({});
+  history.commit();
+}
+
 // ---- Commands ----
 
 function unionBounds(a, b) {
@@ -250,6 +336,9 @@ const actions = {
   'zoom-out': () => viewport.zoomOut(),
   'zoom-100': () => viewport.setZoom(1),
   'zoom-fit': () => viewport.fit(),
+  undo: () => history.undo(),
+  redo: () => history.redo(),
+  reset: () => resetDocument(),
 };
 
 function runAction(action) {
@@ -264,8 +353,9 @@ document.querySelector('.zoom-toolbar').addEventListener('click', (event) => {
 });
 
 updateSettings({});
+history.commit();
 
 // ?debug exposes internals for manual testing in the console.
 if (new URLSearchParams(location.search).has('debug')) {
-  window.app = { canvas, layers, viewport, get settings() { return settings; }, get geometry() { return geometry; } };
+  window.app = { canvas, layers, viewport, history, get settings() { return settings; }, get geometry() { return geometry; } };
 }

@@ -49,8 +49,8 @@ export async function renderLabel({ items, geometry, dpi, onProgress = () => {} 
  * The back is edited in reading orientation; on the strip it must be upside
  * down so it reads correctly after folding over the top edge. Turn the region
  * from the bleed's top edge down to the back/spine fold 180° about the back
- * zone's center (its far-end bleed comes from just past the fold, which is
- * cut off anyway).
+ * zone's center. The far-end bleed would then show what's just past the fold
+ * (the spine), so it repeats the back's edge row instead.
  */
 function turnBackZone(source, zone, area, scale) {
   const out = copyCanvas(source);
@@ -70,6 +70,9 @@ function turnBackZone(source, zone, area, scale) {
   ctx.translate(-cx, -cy);
   ctx.drawImage(source, 0, 0);
   ctx.restore();
+
+  const edgeY = Math.round((zone.y - area.y) * scale);
+  if (edgeY > 0) ctx.drawImage(out, 0, edgeY, out.width, 1, 0, 0, out.width, edgeY);
   return out;
 }
 

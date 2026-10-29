@@ -343,6 +343,7 @@ body {
 /* :where() keeps this reset at low specificity so the rules below win. */
 .menu-bar :where(button) {
   all: unset;
+  box-sizing: border-box; /* all: unset drops the global border-box */
   display: block;
   font: inherit;
   color: inherit;
@@ -366,6 +367,7 @@ body {
   left: 0;
   z-index: 100;
   min-width: 180px;
+  width: max-content;
   margin: 0;
   padding: 3px;
   list-style: none;
@@ -385,6 +387,16 @@ body {
   width: 100%;
   padding: 3px 20px;
   white-space: nowrap;
+}
+
+.menu-popup [data-shortcut] {
+  display: flex;
+  justify-content: space-between;
+}
+
+.menu-popup [data-shortcut]::after {
+  content: attr(data-shortcut);
+  margin-left: 24px;
 }
 
 /* Radio items: a dot before the checked one. */

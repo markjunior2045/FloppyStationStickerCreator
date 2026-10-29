@@ -2,6 +2,7 @@ import { Canvas, FabricObject } from '../vendor/fabric-7.4.0/index.min.mjs';
 import { applyStrings, t } from './strings.js';
 import { initMenuBar } from './menu.js';
 import { applyTheme, currentTheme } from './theme.js';
+import { initShortcuts } from './shortcuts.js';
 import { DEFAULT_FORMAT } from './formats.js';
 import { createFloppyObjects, floppyBounds } from './floppy.js';
 import {
@@ -687,6 +688,33 @@ for (const el of document.querySelectorAll('.zoom-toolbar, .sidebar')) {
     if (button) runAction(button.dataset.action);
   });
 }
+
+initShortcuts({
+  runAction,
+  blocked: () => !document.getElementById('export-dialog').hidden,
+  deleteSelection: () => {
+    const layer = layers.byId(listSelection);
+    if (!layer || side === 'back') return;
+    layers.remove(layer.id);
+    history.commit();
+  },
+  nudge: (dx, dy) => {
+    const object = canvas.getActiveObject();
+    if (!object || !layers.byObject(object)) return false;
+    object.set({ left: object.left + dx, top: object.top + dy });
+    object.setCoords();
+    canvas.requestRenderAll();
+    return true;
+  },
+  nudgeDone: () => {
+    syncPanels();
+    history.commit();
+  },
+  deselect: () => {
+    canvas.discardActiveObject();
+    canvas.requestRenderAll();
+  },
+});
 
 updateSettings({});
 history.commit();

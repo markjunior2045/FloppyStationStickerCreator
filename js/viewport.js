@@ -12,6 +12,7 @@ export function createViewport(canvas, scrollEl, getBounds, onChange = () => {})
   let zoom = 1;
   let scale = SCREEN_PX_PER_MM;
   let offset = { x: 0, y: 0 };
+  let lastAvail = null;
 
   function available() {
     const style = getComputedStyle(scrollEl);
@@ -40,6 +41,10 @@ export function createViewport(canvas, scrollEl, getBounds, onChange = () => {})
   }
 
   function layout(keepCenter = null) {
+    // Fit never needs scrolling. Turning it off keeps scrollbars from
+    // shrinking the area mid-layout (and Chrome doesn't always report that
+    // as a resize, which left the canvas sized for the wrong area).
+    scrollEl.style.overflow = mode === 'fit' ? 'hidden' : 'auto';
     const avail = available();
     if (avail.width <= 0 || avail.height <= 0) return;
     const bounds = paddedBounds();
@@ -48,8 +53,11 @@ export function createViewport(canvas, scrollEl, getBounds, onChange = () => {})
     scale = zoom * SCREEN_PX_PER_MM;
     const contentWidth = bounds.width * scale;
     const contentHeight = bounds.height * scale;
-    const width = Math.max(Math.floor(avail.width), Math.ceil(contentWidth));
-    const height = Math.max(Math.floor(avail.height), Math.ceil(contentHeight));
+    // In fit mode the canvas must never exceed the area (rounding could add 1 px).
+    const fits = mode === 'fit';
+    const width = fits ? Math.floor(avail.width) : Math.max(Math.floor(avail.width), Math.ceil(contentWidth));
+    const height = fits ? Math.floor(avail.height) : Math.max(Math.floor(avail.height), Math.ceil(contentHeight));
+    lastAvail = avail;
     offset = {
       x: (width - contentWidth) / 2 - bounds.x * scale,
       y: (height - contentHeight) / 2 - bounds.y * scale,
@@ -81,7 +89,13 @@ export function createViewport(canvas, scrollEl, getBounds, onChange = () => {})
     layout(center);
   }
 
-  new ResizeObserver(() => layout()).observe(scrollEl);
+  // Only re-layout when the available area really changed; resizing the canvas
+  // itself must not feed back into another layout.
+  new ResizeObserver(() => {
+    const avail = available();
+    if (lastAvail && avail.width === lastAvail.width && avail.height === lastAvail.height) return;
+    layout();
+  }).observe(scrollEl);
 
   return {
     layout,

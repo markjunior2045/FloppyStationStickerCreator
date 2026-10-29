@@ -110,6 +110,13 @@ body {
   gap: 4px;
 }
 
+/* One line only: a wrapping status bar would change the canvas area height. */
+.app-window .status-bar-field {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ---- Menu bar ---- */
 
 .menu-bar {

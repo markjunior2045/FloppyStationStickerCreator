@@ -66,7 +66,7 @@ export const STRINGS = {
     remove: 'Remove',
     zoom: 'Zoom',
     resetFraming: 'Reset framing',
-    dropHint: 'Tip: drop an image on the canvas to use it as the background.',
+    dropHint: 'Tip: drop an image on the canvas for the background, or on Logo for the logo.',
     loadError: 'Could not open that image.',
   },
   layers: {

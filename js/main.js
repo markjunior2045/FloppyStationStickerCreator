@@ -11,6 +11,7 @@ import { createLayerStore } from './layers.js';
 import {
   backgroundZoom, constrainBackground, createBackgroundLayer, resetBackgroundFraming, setBackgroundZoom,
 } from './background.js';
+import { createLogoLayer } from './logo.js';
 import { acceptImageDrops, loadImage, readFileAsDataUrl } from './images.js';
 import { formatMm, SCREEN_PX_PER_MM } from './units.js';
 import { createViewport } from './viewport.js';
@@ -133,6 +134,13 @@ async function openImage(type, file) {
     if (previous) layers.remove(previous.id);
     layers.add(layer, 0);
     canvas.setActiveObject(layer.object);
+  } else if (type === 'logo') {
+    const previous = layers.byType('logo')[0];
+    const layer = createLogoLayer({ image, src, name: t('layers.logo'), geometry });
+    const index = previous ? layers.all.indexOf(previous) : layers.all.length;
+    if (previous) layers.remove(previous.id);
+    layers.add(layer, index);
+    canvas.setActiveObject(layer.object);
   }
   syncPanels();
 }
@@ -155,6 +163,7 @@ function syncPanels() {
   const background = currentBackground();
   imagesPanel.sync({
     background: background ? { zoom: backgroundZoom(background.object, geometry.bleed) } : null,
+    logo: layers.byType('logo')[0] ? {} : null,
   });
 }
 

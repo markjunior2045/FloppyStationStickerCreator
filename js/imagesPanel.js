@@ -12,6 +12,7 @@ import { acceptImageDrops, pickImageFile } from './images.js';
 export function initImagesPanel(root, handlers) {
   const slots = {
     background: root.querySelector('#background-slot'),
+    logo: root.querySelector('#logo-slot'),
   };
 
   for (const [type, slot] of Object.entries(slots)) {
@@ -33,8 +34,9 @@ export function initImagesPanel(root, handlers) {
   root.querySelector('#bg-reset').addEventListener('click', handlers.onBackgroundReset);
 
   return {
-    /** state: { background: { zoom } | null } */
+    /** state: { background: { zoom } | null, logo: {} | null } */
     sync(state) {
+      slots.logo.querySelector('[data-image-action="remove"]').disabled = !state.logo;
       const bg = state.background;
       slots.background.querySelector('[data-image-action="remove"]').disabled = !bg;
       zoom.disabled = !bg;

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Theme test — 98.css vs XP.css</title>
+  <link id="theme-css" rel="stylesheet" href="../vendor/98.css-0.1.21/98.css">
+  <style>
+    body { background: #808080; padding: 16px; margin: 0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; align-items: start; }
+    .window { margin: 0; }
+    .note { font-size: 11px; color: #444; margin: 4px 0 0; }
+    .switcher { position: sticky; top: 0; z-index: 1; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <div class="window switcher">
+    <div class="title-bar">
+      <div class="title-bar-text">Theme switch</div>
+    </div>
+    <div class="window-body">
+      <div class="field-row">
+        <input id="t98" type="radio" name="theme" value="../vendor/98.css-0.1.21/98.css" checked>
+        <label for="t98">98.css 0.1.21</label>
+        <input id="txp" type="radio" name="theme" value="../vendor/xp.css-0.2.6/XP.css">
+        <label for="txp">XP.css 0.2.6</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Window chrome -->
+    <div class="window">
+      <div class="title-bar">
+        <div class="title-bar-text">Window + title bar controls</div>
+        <div class="title-bar-controls">
+          <button aria-label="Help"></button>
+          <button aria-label="Minimize"></button>
+          <button aria-label="Maximize"></button>
+          <button aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <p>Window body text.</p>
+        <section class="field-row" style="justify-content: flex-end">
+          <button class="default">OK (.default)</button>
+          <button>Cancel</button>
+          <button disabled>Disabled</button>
+        </section>
+      </div>
+      <div class="status-bar">
+        <p class="status-bar-field">Status bar</p>
+        <p class="status-bar-field">Zoom: 100%</p>
+      </div>
+    </div>
+
+    <!-- Inactive title bar -->
+    <div class="window">
+      <div class="title-bar inactive">
+        <div class="title-bar-text">Inactive title bar (.inactive)</div>
+        <div class="title-bar-controls">
+          <button aria-label="Restore"></button>
+          <button aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="window-body"><p>98.css only.</p></div>
+    </div>
+
+    <!-- Group box + fields -->
+    <div class="window">
+      <div class="title-bar"><div class="title-bar-text">Group box + fields</div></div>
+      <div class="window-body">
+        <fieldset>
+          <legend>Floppy</legend>
+          <div class="field-row">
+            <label for="txt">Text</label>
+            <input id="txt" type="text" value="Monkey Island">
+          </div>
+          <div class="field-row">
+            <label for="num">Number (mm)</label>
+            <input id="num" type="number" value="71.0" step="0.1">
+          </div>
+          <div class="field-row-stacked" style="width: 200px">
+            <label for="sel">Select</label>
+            <select id="sel"><option>3.5" (front only)</option><option>3.5" (wrap-around)</option></select>
+          </div>
+          <div class="field-row">
+            <input id="cb1" type="checkbox" checked><label for="cb1">Show guides</label>
+          </div>
+          <div class="field-row">
+            <input id="cb2" type="checkbox" disabled><label for="cb2">Disabled</label>
+          </div>
+          <div class="field-row">
+            <input id="r1" type="radio" name="corners" checked><label for="r1">Square</label>
+            <input id="r2" type="radio" name="corners"><label for="r2">2 rounded</label>
+            <input id="r3" type="radio" name="corners"><label for="r3">4 rounded</label>
+          </div>
+          <div class="field-row">
+            <label for="rng">Grain</label>
+            <input id="rng" type="range" min="0" max="100" value="40">
+          </div>
+          <div class="field-row-stacked">
+            <label for="ta">Textarea</label>
+            <textarea id="ta" rows="2">Multi-line text</textarea>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- Layer list candidates -->
+    <div class="window">
+      <div class="title-bar"><div class="title-bar-text">Layer list candidates</div></div>
+      <div class="window-body">
+        <p class="note">.sunken-panel + table.interactive (98.css 0.1.20+)</p>
+        <div class="sunken-panel" style="height: 90px; width: 100%">
+          <table class="interactive" style="width: 100%">
+            <thead><tr><th>Layer</th><th>Visible</th></tr></thead>
+            <tbody>
+              <tr class="highlighted"><td>Text 1</td><td>Yes</td></tr>
+              <tr><td>Logo</td><td>Yes</td></tr>
+              <tr><td>Background</td><td>No</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">ul.tree-view</p>
+        <ul class="tree-view">
+          <li>Text 1</li>
+          <li>Logo</li>
+          <li>Background</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="window">
+      <div class="title-bar"><div class="title-bar-text">Tabs</div></div>
+      <div class="window-body">
+        <p class="note">98.css markup: menu[role=tablist] &gt; li[role=tab]</p>
+        <menu role="tablist">
+          <li role="tab" aria-selected="true"><a href="#tabs">Front</a></li>
+          <li role="tab"><a href="#tabs">Spine</a></li>
+          <li role="tab"><a href="#tabs">Back</a></li>
+        </menu>
+        <div class="window" role="tabpanel"><div class="window-body"><p>Panel</p></div></div>
+        <p class="note">XP.css markup: menu[role=tablist] &gt; button</p>
+        <menu role="tablist">
+          <button aria-selected="true">Front</button>
+          <button>Spine</button>
+          <button>Back</button>
+        </menu>
+        <article role="tabpanel"><p>Panel</p></article>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="window">
+      <div class="title-bar"><div class="title-bar-text">Progress bar</div></div>
+      <div class="window-body">
+        <p class="note">98.css markup: .progress-indicator</p>
+        <div class="progress-indicator segmented">
+          <span class="progress-indicator-bar" style="width: 60%"></span>
+        </div>
+        <p class="note">XP.css markup: &lt;progress&gt;</p>
+        <progress max="100" value="60"></progress>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const link = document.getElementById('theme-css');
+    for (const radio of document.querySelectorAll('input[name="theme"]')) {
+      radio.addEventListener('change', () => { link.href = radio.value; });
+    }
+    // Allow ?theme=xp for screenshots
+    if (new URLSearchParams(location.search).get('theme') === 'xp') {
+      document.getElementById('txp').checked = true;
+      link.href = document.getElementById('txp').value;
+    }
+  </script>
+</body>
+</html>

@@ -2,8 +2,6 @@
 
 Design printable labels for **3.5" floppy disks** with the look of an old game label, and print them at exact physical size.
 
-Companion to Floppy Station (a launcher that starts PC games when a floppy is inserted).
-
 **Use it online:** https://markjunior2045.github.io/FloppyStationStickerCreator/
 
 Everything runs in your browser. Your images never leave your computer: there is no server, no upload, no account.

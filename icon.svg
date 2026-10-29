@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" shape-rendering="crispEdges">
+  <!-- Pixel-art 3.5" floppy: shutter on top, label below, one cut corner. -->
+  <path d="M1 1H27L31 5V31H1Z" fill="#0b1a45"/>
+  <path d="M2 2H26L30 6V30H2Z" fill="#2a4fb0"/>
+  <rect x="8" y="2" width="15" height="10" fill="#0b1a45"/>
+  <rect x="9" y="2" width="13" height="9" fill="#c9ced6"/>
+  <rect x="9" y="2" width="13" height="1" fill="#eef0f3"/>
+  <rect x="17" y="4" width="3" height="6" fill="#2a4fb0"/>
+  <rect x="5" y="15" width="22" height="15" fill="#0b1a45"/>
+  <rect x="6" y="16" width="20" height="14" fill="#f6f2e4"/>
+  <rect x="8" y="19" width="16" height="2" fill="#d63a2f"/>
+  <rect x="8" y="23" width="12" height="1" fill="#8a8a8a"/>
+  <rect x="8" y="26" width="14" height="1" fill="#8a8a8a"/>
+  <rect x="3" y="27" width="1" height="2" fill="#0b1a45"/>
+</svg>

@@ -76,7 +76,7 @@ export const STRINGS = {
   about: {
     title: 'About',
     version: 'Version 1.0',
-    description: 'Design printable labels for 3.5" floppy disks, with the look of an old game label. A companion to Floppy Station.',
+    description: 'Design printable labels for 3.5" floppy disks, with the look of an old game label.',
     privacy: 'Everything runs in your browser: your images never leave your computer.',
     credits: 'Built with Fabric.js, jsPDF, 98.css and XP.css (MIT). Fonts: SIL Open Font License.',
     source: 'Source code on GitHub',

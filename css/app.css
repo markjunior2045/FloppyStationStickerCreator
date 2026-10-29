@@ -578,7 +578,21 @@ body {
 }
 
 .about-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: bold;
+}
+
+/* Small window icon before the title, like classic title bars. */
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.title-icon {
+  image-rendering: pixelated;
 }
 
 /* Own progress bar: 98.css and XP.css use different markup for theirs. */

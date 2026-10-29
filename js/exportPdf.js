@@ -9,12 +9,11 @@ const MARGIN = 8;
 const MARK = { gap: 1.5, length: 4, width: 0.15 };
 const MARK_SPACE = MARK.gap + MARK.length + 0.5;
 const RULER = { length: 50, height: 14 };
-// Cut line drawn on the label itself: a black dash over a white line, so it
-// shows on any background.
-const CUT_LINE = { under: 0.35, over: 0.18, dash: [1.2, 0.8] };
-// Fold lines across the label: same two-tone line, dash-dot so they don't
-// read as cut lines.
-const FOLD_LINE = { under: 0.3, over: 0.15, dash: [1.6, 0.6, 0.3, 0.6] };
+// Cut and fold lines drawn on the label itself: a thin black line over a
+// white one, so they show on any background. Solid, which looks cleaner than
+// dashes once the label is cut and folded (user test).
+const CUT_LINE = { under: 0.35, over: 0.15 };
+const FOLD_LINE = { under: 0.3, over: 0.12 };
 // Bezier handle length for a quarter circle.
 const ARC_K = 0.5523;
 
@@ -113,7 +112,7 @@ function drawFoldLine(doc, left, right, y) {
   drawTwoTone(doc, [{ op: 'm', c: [left, y] }, { op: 'l', c: [right, y] }], FOLD_LINE);
 }
 
-// White solid line with a black dashed one on top: visible on any background.
+// White line with a black one on top: visible on any background.
 function drawTwoTone(doc, ops, style) {
   doc.setLineJoin('round');
   doc.setDrawColor(255);
@@ -122,10 +121,8 @@ function drawTwoTone(doc, ops, style) {
   doc.stroke();
   doc.setDrawColor(0);
   doc.setLineWidth(style.over);
-  doc.setLineDashPattern(style.dash, 0);
   doc.path(ops);
   doc.stroke();
-  doc.setLineDashPattern([], 0);
   doc.setLineWidth(MARK.width);
   doc.setLineJoin('miter');
 }

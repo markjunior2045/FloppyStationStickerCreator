@@ -87,6 +87,7 @@ export function initExportDialog(root, handlers) {
     open() {
       root.hidden = false;
       progress.hidden = true;
+      copies.value = '1';
       status.textContent = '';
       syncType();
       filename.focus();

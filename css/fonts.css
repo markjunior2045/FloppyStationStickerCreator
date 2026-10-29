@@ -1,0 +1,90 @@
+/* Retro label fonts, vendored from @fontsource 5.3.0 (latin, 400). All SIL OFL 1.1;
+   each license is next to its file in /vendor/fonts. Listed for the UI in js/fonts.js. */
+
+@font-face {
+  font-family: "Press Start 2P";
+  src: url("../vendor/fonts/press-start-2p-5.3.0/press-start-2p-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "VT323";
+  src: url("../vendor/fonts/vt323-5.3.0/vt323-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Silkscreen";
+  src: url("../vendor/fonts/silkscreen-5.3.0/silkscreen-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Orbitron";
+  src: url("../vendor/fonts/orbitron-5.3.0/orbitron-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Audiowide";
+  src: url("../vendor/fonts/audiowide-5.3.0/audiowide-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Bungee";
+  src: url("../vendor/fonts/bungee-5.3.0/bungee-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Russo One";
+  src: url("../vendor/fonts/russo-one-5.3.0/russo-one-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Black Ops One";
+  src: url("../vendor/fonts/black-ops-one-5.3.0/black-ops-one-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Righteous";
+  src: url("../vendor/fonts/righteous-5.3.0/righteous-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Bebas Neue";
+  src: url("../vendor/fonts/bebas-neue-5.3.0/bebas-neue-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Monoton";
+  src: url("../vendor/fonts/monoton-5.3.0/monoton-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}

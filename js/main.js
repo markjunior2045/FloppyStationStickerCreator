@@ -22,6 +22,8 @@ import { acceptImageDrops, loadImage, readFileAsDataUrl } from './images.js';
 import { formatMm, SCREEN_PX_PER_MM } from './units.js';
 import { createViewport } from './viewport.js';
 import { renderLabel } from './exportRender.js';
+import { buildSheetPdf, sheetLayout } from './exportPdf.js';
+import { canvasToPngBlob } from './exportPng.js';
 
 applyStrings();
 document.title = t('appTitle');
@@ -412,5 +414,5 @@ history.commit();
 
 // ?debug exposes internals for manual testing in the console.
 if (new URLSearchParams(location.search).has('debug')) {
-  window.app = { canvas, layers, viewport, history, labelView, renderLabel, get settings() { return settings; }, get geometry() { return geometry; } };
+  window.app = { canvas, layers, viewport, history, labelView, renderLabel, buildSheetPdf, sheetLayout, canvasToPngBlob, get settings() { return settings; }, get geometry() { return geometry; } };
 }

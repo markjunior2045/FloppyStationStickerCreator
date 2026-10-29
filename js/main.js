@@ -1,4 +1,4 @@
-import { Canvas } from '../vendor/fabric-7.4.0/index.min.mjs';
+import { Canvas, FabricObject } from '../vendor/fabric-7.4.0/index.min.mjs';
 import { applyStrings, t } from './strings.js';
 import { initMenuBar } from './menu.js';
 import { DEFAULT_FORMAT } from './formats.js';
@@ -28,6 +28,10 @@ import { renderLabel } from './exportRender.js';
 import { buildSheetPdf, sheetLayout } from './exportPdf.js';
 import { canvasToPngBlob, downloadBlob } from './exportPng.js';
 import { initExportDialog } from './exportDialog.js';
+
+// Fabric defaults strokeWidth to 1 even without a stroke and places the
+// stroked box at left/top, which shifted every unstroked shape by 0.5 mm.
+FabricObject.ownDefaults.strokeWidth = 0;
 
 applyStrings();
 document.title = t('appTitle');

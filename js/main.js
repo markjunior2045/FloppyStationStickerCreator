@@ -33,6 +33,7 @@ import { renderLabel } from './exportRender.js';
 import { buildSheetPdf, sheetLayout } from './exportPdf.js';
 import { canvasToPngBlob, downloadBlob } from './exportPng.js';
 import { initExportDialog } from './exportDialog.js';
+import { initSheetPanel } from './sheetPanel.js';
 
 // Fabric defaults strokeWidth to 1 even without a stroke and places the
 // stroked box at left/top, which shifted every unstroked shape by 0.5 mm.
@@ -569,9 +570,92 @@ function resetDocument() {
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
 
+/** Renders the document currently in the editor. */
+async function renderCurrent(dpi) {
+  await loadFonts(layers.byType('text').map((layer) => layer.object.fontFamily));
+  const items = [
+    { object: labelView.base, clip: null },
+    ...layers.all
+      .map((layer) => ({ object: layer.object, clip: exportClip(layer) }))
+      .filter((item) => item.clip !== undefined),
+    // Effects run into the bleed like the layers (the border is shaped already).
+    ...effectItems.map((item) => ({ object: item.object, clip: null })),
+  ];
+  const image = await renderLabel({ items, geometry, dpi });
+  return { image, geometry };
+}
+
+// ---- Sheet list: different designs printed together ----
+
+let sheetEntries = [];
+let nextSheetId = 1;
+
+function sheetEntryName(doc) {
+  const text = doc.layers.find((entry) => entry.type === 'text' && entry.text?.text.trim());
+  return text ? text.text.text.split('\n')[0].trim().slice(0, 28) : `${t('sheet.label')} ${nextSheetId}`;
+}
+
+function addSheetEntry(doc) {
+  sheetEntries = [...sheetEntries, { id: `sheet-${nextSheetId}`, name: sheetEntryName(doc), doc }];
+  nextSheetId += 1;
+  sheetPanel.render(sheetEntries);
+}
+
+const sheetPanel = initSheetPanel(document.getElementById('sheet-panel'), {
+  onAddCurrent: () => addSheetEntry(captureDocument()),
+  onAddProject: async () => {
+    const file = await pickProjectFile();
+    if (!file) return;
+    try {
+      addSheetEntry(await readProjectFile(file));
+    } catch (error) {
+      alert(t('project.openError', { reason: error.message }));
+    }
+  },
+  onRemove: (id) => {
+    sheetEntries = sheetEntries.filter((entry) => entry.id !== id);
+    sheetPanel.render(sheetEntries);
+  },
+  onOpen: async (id) => {
+    const entry = sheetEntries.find((e) => e.id === id);
+    if (!entry) return;
+    setSide('front');
+    await restoreDocument(entry.doc);
+    viewport.fit();
+    history.commit();
+  },
+});
+sheetPanel.render(sheetEntries);
+
+/**
+ * Renders each sheet entry by loading it into the editor (hidden), then puts
+ * the current document back. Reuses the exact editor/export pipeline.
+ */
+async function renderSheetEntries(dpi, onProgress) {
+  const current = captureDocument();
+  const scroll = document.querySelector('.canvas-scroll');
+  scroll.style.visibility = 'hidden';
+  const rendered = [];
+  try {
+    for (const [i, entry] of sheetEntries.entries()) {
+      onProgress(i / sheetEntries.length, t('exportDialog.renderingEntry', { index: i + 1, count: sheetEntries.length }));
+      await restoreDocument(entry.doc);
+      rendered.push(await renderCurrent(dpi));
+      await nextFrame();
+    }
+  } finally {
+    await restoreDocument(current);
+    scroll.style.visibility = '';
+  }
+  return rendered;
+}
+
 const exportDialog = initExportDialog(document.getElementById('export-dialog'), {
   maxCopies: () => sheetLayout(geometry).max,
-  hasFolds: () => geometry.folds.length > 0,
+  hasFolds: (type) => (type === 'sheet'
+    ? sheetEntries.some((entry) => entry.doc.settings.mode === 'wrap')
+    : geometry.folds.length > 0),
+  sheetCount: () => sheetEntries.length,
   async run({ type, dpi, copies, cutLine, foldLines, filename }, onProgress) {
     if (type === 'json') {
       onProgress(0.5, t('exportDialog.savingProject'));
@@ -579,29 +663,23 @@ const exportDialog = initExportDialog(document.getElementById('export-dialog'), 
       markSaved();
       return;
     }
-    const items = [
-      { object: labelView.base, clip: null },
-      ...layers.all
-        .map((layer) => ({ object: layer.object, clip: exportClip(layer) }))
-        .filter((item) => item.clip !== undefined),
-      // Effects run into the bleed like the layers (the border is shaped already).
-      ...effectItems.map((item) => ({ object: item.object, clip: null })),
-    ];
+    if (type === 'sheet') {
+      const labels = await renderSheetEntries(dpi, (fraction, label) => onProgress(0.05 + fraction * 0.65, label));
+      onProgress(0.75, t('exportDialog.encoding'));
+      await nextFrame();
+      const blob = buildSheetPdf({ labels, dpi, cutLine, foldLines, title: filename });
+      downloadBlob(blob, `${filename}.pdf`);
+      return;
+    }
     const rendering = t('exportDialog.rendering', { dpi });
     onProgress(0.05, rendering);
-    await loadFonts(layers.byType('text').map((layer) => layer.object.fontFamily));
     await nextFrame();
-    const image = await renderLabel({
-      items,
-      geometry,
-      dpi,
-      onProgress: (fraction) => onProgress(0.05 + fraction * 0.6, rendering),
-    });
+    const label = await renderCurrent(dpi);
     onProgress(0.7, t('exportDialog.encoding'));
     await nextFrame();
     const blob = type === 'pdf'
-      ? buildSheetPdf({ image, geometry, copies, dpi, cutLine, foldLines, title: filename })
-      : await canvasToPngBlob(image, dpi);
+      ? buildSheetPdf({ labels: Array(copies).fill(label), dpi, cutLine, foldLines, title: filename })
+      : await canvasToPngBlob(label.image, dpi);
     downloadBlob(blob, `${filename}.${type}`);
   },
 });

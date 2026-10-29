@@ -283,6 +283,20 @@
             <button data-action="export" data-i18n="menu.export"></button>
           </div>
           <p class="hint" data-i18n="exportDialog.groupHint"></p>
+
+          <div id="sheet-panel">
+            <p class="group-caption"><span data-i18n="sheet.title"></span> <span class="sheet-count" id="sheet-count"></span></p>
+            <ul class="layer-list sheet-list" role="listbox"></ul>
+            <div class="field-row layer-buttons">
+              <button data-sheet-action="add" data-i18n="sheet.add" data-i18n-title="sheet.addHint"></button>
+              <button data-sheet-action="add-project" data-i18n="sheet.addProject"></button>
+            </div>
+            <div class="field-row layer-buttons">
+              <button data-sheet-action="open" data-i18n="sheet.open" data-i18n-title="sheet.openHint"></button>
+              <button data-sheet-action="remove" data-i18n="sheet.remove"></button>
+            </div>
+            <p class="hint" data-i18n="sheet.hint"></p>
+          </div>
         </fieldset>
       </aside>
 
@@ -325,6 +339,7 @@
           <select id="export-type">
             <option value="pdf" data-i18n="exportDialog.typePdf"></option>
             <option value="png" data-i18n="exportDialog.typePng"></option>
+            <option value="sheet" id="export-type-sheet"></option>
             <option value="json" data-i18n="exportDialog.typeProject"></option>
           </select>
           <label for="export-dpi" id="export-dpi-label" data-i18n="exportDialog.resolution"></label>

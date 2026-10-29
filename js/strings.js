@@ -29,6 +29,7 @@ export const STRINGS = {
   },
   export: {
     sheetInfo: '3.5" floppy label {width} x {height} mm - {dpi} dpi - FloppyStation Sticker Creator',
+    sheetInfoMixed: '{count} floppy labels - {dpi} dpi - FloppyStation Sticker Creator',
     rulerNote: 'Calibration: this line must measure exactly {length} mm. Print at 100% / Actual size, not "Fit to page".',
   },
   exportDialog: {
@@ -38,6 +39,8 @@ export const STRINGS = {
     typePdf: 'PDF - A4 sheet, actual size (*.pdf)',
     typePng: 'PNG image, label only (*.png)',
     typeProject: 'Project, to edit later (*.json)',
+    typeSheet: 'PDF - A4 sheet with the {count} labels in the sheet list (*.pdf)',
+    renderingEntry: 'Rendering label {index} of {count}…',
     resolution: 'Resolution:',
     dpi300: '300 dpi',
     dpi600: '600 dpi (small text)',
@@ -56,6 +59,19 @@ export const STRINGS = {
     groupHint: 'PDF on an A4 sheet at actual size, or a PNG of the label.',
     savingProject: 'Saving project…',
     projectNote: 'The project keeps the label, its images and its text so you can open it again with File > Open.',
+  },
+  sheet: {
+    title: 'Sheet',
+    count: '({count})',
+    empty: 'No labels yet.',
+    add: 'Add this label',
+    addHint: 'Add the current design to the sheet list (a snapshot: later edits don\'t change it)',
+    addProject: 'Add project…',
+    open: 'Open',
+    openHint: 'Load this design into the editor (undo returns to the current one)',
+    remove: 'Remove',
+    hint: 'Print different labels together: add them here, then Export > "A4 sheet with the labels in the sheet list". Add one twice for two copies.',
+    label: 'Label',
   },
   project: {
     openError: 'Could not open that project ({reason}).',

@@ -297,6 +297,14 @@ body {
   color: var(--menu-disabled-fg);
 }
 
+.sheet-list {
+  height: 72px;
+}
+
+.sheet-count {
+  font-weight: normal;
+}
+
 .layer-buttons {
   margin-top: 6px;
 }

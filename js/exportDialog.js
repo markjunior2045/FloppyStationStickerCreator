@@ -5,7 +5,8 @@ import { t } from './strings.js';
 /**
  * handlers: {
  *   maxCopies()                              copies that fit on an A4 sheet
- *   hasFolds()                               the label has fold lines (wrap-around)
+ *   hasFolds(type)                           there are fold lines to draw (this label, or any in the sheet list)
+ *   sheetCount()                             labels in the sheet list
  *   run({ type, dpi, copies, cutLine, foldLines, filename }, onProgress)   async; onProgress(0..1, label)
  * }
  */
@@ -25,6 +26,12 @@ export function initExportDialog(root, handlers) {
   let busy = false;
 
   function syncType() {
+    const sheetCount = handlers.sheetCount();
+    const sheetOption = root.querySelector('#export-type-sheet');
+    sheetOption.textContent = t('exportDialog.typeSheet', { count: sheetCount });
+    sheetOption.disabled = sheetCount === 0;
+    if (type.value === 'sheet' && sheetCount === 0) type.value = 'pdf';
+    const sheet = type.value === 'sheet';
     const pdf = type.value === 'pdf';
     const project = type.value === 'json';
     dpi.hidden = project;
@@ -32,8 +39,8 @@ export function initExportDialog(root, handlers) {
     root.querySelector('.export-note').textContent = t(project ? 'exportDialog.projectNote' : 'exportDialog.printNote');
     copiesRow.hidden = !pdf;
     root.querySelector('#export-copies-label').hidden = !pdf;
-    root.querySelector('#export-cutline-row').hidden = !pdf;
-    root.querySelector('#export-foldlines-row').hidden = !pdf || !handlers.hasFolds();
+    root.querySelector('#export-cutline-row').hidden = !pdf && !sheet;
+    root.querySelector('#export-foldlines-row').hidden = !(pdf || sheet) || !handlers.hasFolds(type.value);
     const max = handlers.maxCopies();
     copiesMax.textContent = t('exportDialog.copiesMax', { max });
     const value = Number.parseInt(copies.value, 10);

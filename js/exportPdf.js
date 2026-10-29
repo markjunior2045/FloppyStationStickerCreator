@@ -1,5 +1,6 @@
-// A4 sheet PDF: copies of the label raster placed at exact size in mm, with
-// crop marks, fold marks and a calibration ruler. All units mm.
+// A4 sheet PDF: label rasters (copies of one, or several designs) placed at
+// exact size in mm, with crop marks, fold marks and a calibration ruler.
+// All units mm.
 import { t } from './strings.js';
 import { formatMm } from './units.js';
 
@@ -17,72 +18,122 @@ const FOLD_LINE = { under: 0.3, over: 0.12 };
 // Bezier handle length for a quarter circle.
 const ARC_K = 0.5523;
 
-/** Where labels go on the sheet: bleed top-left of each copy. */
-export function sheetLayout(geometry, copies = Infinity) {
-  const { bleed } = geometry;
-  const cellW = bleed.width + MARK_SPACE * 2;
-  const cellH = bleed.height + MARK_SPACE * 2;
-  const availW = PAGE.width - MARGIN * 2;
-  const availH = PAGE.height - MARGIN * 2 - RULER.height;
-  const cols = Math.max(0, Math.floor(availW / cellW));
-  const rows = Math.max(0, Math.floor(availH / cellH));
-  const max = cols * rows;
-  const count = Math.max(0, Math.min(max, copies));
-  const left = MARGIN + (availW - cols * cellW) / 2 + MARK_SPACE;
-  const top = MARGIN + MARK_SPACE;
-  const cells = Array.from({ length: count }, (_, i) => ({
-    x: left + (i % cols) * cellW,
-    y: top + Math.floor(i / cols) * cellH,
-  }));
-  return { cols, rows, max, cells };
+/** How many copies of one label fit on a sheet (for the export dialog). */
+export function sheetLayout(geometry) {
+  const { cols, rows } = gridFor(cellSize(geometry));
+  return { cols, rows, max: cols * rows };
+}
+
+function cellSize({ bleed }) {
+  return { width: bleed.width + MARK_SPACE * 2, height: bleed.height + MARK_SPACE * 2 };
+}
+
+const AVAIL = {
+  width: PAGE.width - MARGIN * 2,
+  height: PAGE.height - MARGIN * 2 - RULER.height,
+};
+
+function gridFor(cell) {
+  return {
+    cols: Math.max(0, Math.floor(AVAIL.width / cell.width)),
+    rows: Math.max(0, Math.floor(AVAIL.height / cell.height)),
+  };
 }
 
 /**
- * image: label raster covering geometry.bleed (from renderLabel).
+ * Shelf packing for labels of any size: left to right in rows, rows top to
+ * bottom, a new page when the next row doesn't fit; each row is centered.
+ * Returns pages of [{ index, x, y }] (bleed top-left in page mm).
+ */
+export function packLabels(geometries) {
+  const pages = [];
+  let page = [];
+  let row = [];
+  let rowWidth = 0;
+  let rowHeight = 0;
+  let y = 0;
+
+  const closeRow = () => {
+    const left = MARGIN + (AVAIL.width - rowWidth) / 2;
+    let x = left;
+    for (const item of row) {
+      page.push({ index: item.index, x: x + MARK_SPACE, y: MARGIN + y + MARK_SPACE });
+      x += item.width;
+    }
+    y += rowHeight;
+    row = [];
+    rowWidth = 0;
+    rowHeight = 0;
+  };
+
+  geometries.forEach((geometry, index) => {
+    const cell = cellSize(geometry);
+    if (rowWidth + cell.width > AVAIL.width && row.length) closeRow();
+    if (y + Math.max(rowHeight, cell.height) > AVAIL.height && (row.length || page.length)) {
+      if (row.length) closeRow();
+      pages.push(page);
+      page = [];
+      y = 0;
+    }
+    row.push({ index, width: cell.width });
+    rowWidth += cell.width;
+    rowHeight = Math.max(rowHeight, cell.height);
+  });
+  if (row.length) closeRow();
+  if (page.length) pages.push(page);
+  return pages;
+}
+
+/**
+ * labels: [{ image, geometry }] placed once each, in order (repeat an entry
+ * for copies). image: raster covering geometry.bleed (from renderLabel).
  * cutLine: draw the exact cut path (rounded corners included) over each label.
  * foldLines: draw the fold lines across each label (wrap-around).
- * Returns a PDF Blob.
+ * Returns a PDF Blob; more pages are added when the labels don't fit on one.
  */
 export function buildSheetPdf({
-  image, geometry, copies, dpi, title, cutLine = true, foldLines = true, compress = true,
+  labels, dpi, title, cutLine = true, foldLines = true, compress = true,
 }) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress });
   doc.setProperties({ title, creator: t('appTitle') });
 
-  const { bleed, outline, folds } = geometry;
-  const data = image.toDataURL('image/png');
-  const layout = sheetLayout(geometry, copies);
+  // Each distinct raster is embedded once and reused by alias.
+  const aliases = new Map();
+  const imageData = (image) => {
+    if (!aliases.has(image)) aliases.set(image, { alias: `label-${aliases.size}`, data: image.toDataURL('image/png') });
+    return aliases.get(image);
+  };
 
-  doc.setLineWidth(MARK.width);
-  doc.setDrawColor(0);
-  for (const cell of layout.cells) {
-    // One embedded image, reused by alias for every copy.
-    doc.addImage(data, 'PNG', cell.x, cell.y, bleed.width, bleed.height, 'label', 'FAST');
+  const pages = packLabels(labels.map((label) => label.geometry));
+  const single = new Set(labels.map((label) => label.image)).size === 1;
+  const { outline: firstOutline } = labels[0].geometry;
+  const info = single
+    ? t('export.sheetInfo', { width: formatMm(firstOutline.width), height: formatMm(firstOutline.height), dpi })
+    : t('export.sheetInfoMixed', { count: labels.length, dpi });
 
-    const box = { x: cell.x, y: cell.y, width: bleed.width, height: bleed.height };
-    const cut = {
-      left: cell.x + (outline.x - bleed.x),
-      top: cell.y + (outline.y - bleed.y),
-    };
-    cut.right = cut.left + outline.width;
-    cut.bottom = cut.top + outline.height;
-    drawCropMarks(doc, box, cut);
-    drawFoldMarks(doc, box, folds.map((y) => cell.y + (y - bleed.y)));
-    if (foldLines) {
-      for (const y of folds) drawFoldLine(doc, cut.left, cut.right, cell.y + (y - bleed.y));
+  pages.forEach((placements, pageIndex) => {
+    if (pageIndex > 0) doc.addPage('a4', 'portrait');
+    doc.setLineWidth(MARK.width);
+    doc.setDrawColor(0);
+    for (const { index, x, y } of placements) {
+      const { image, geometry } = labels[index];
+      const { bleed, outline, folds } = geometry;
+      const { alias, data } = imageData(image);
+      doc.addImage(data, 'PNG', x, y, bleed.width, bleed.height, alias, 'FAST');
+
+      const box = { x, y, width: bleed.width, height: bleed.height };
+      const cut = { left: x + (outline.x - bleed.x), top: y + (outline.y - bleed.y) };
+      cut.right = cut.left + outline.width;
+      cut.bottom = cut.top + outline.height;
+      drawCropMarks(doc, box, cut);
+      drawFoldMarks(doc, box, folds.map((fy) => y + (fy - bleed.y)));
+      if (foldLines) {
+        for (const fy of folds) drawFoldLine(doc, cut.left, cut.right, y + (fy - bleed.y));
+      }
+      if (cutLine) drawCutLine(doc, { ...outline, x: cut.left, y: cut.top });
     }
-    if (cutLine) drawCutLine(doc, { ...outline, x: cut.left, y: cut.top });
-  }
-
-  drawRuler(doc, {
-    x: (PAGE.width - RULER.length) / 2,
-    y: PAGE.height - MARGIN - 4,
-    info: t('export.sheetInfo', {
-      width: formatMm(outline.width),
-      height: formatMm(outline.height),
-      dpi,
-    }),
+    drawRuler(doc, { x: (PAGE.width - RULER.length) / 2, y: PAGE.height - MARGIN - 4, info });
   });
 
   return doc.output('blob');

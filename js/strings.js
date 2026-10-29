@@ -18,11 +18,19 @@ export const STRINGS = {
     zoomOut: 'Zoom out',
     actualSize: 'Actual size (100%)',
     fit: 'Fit to window',
+    sideFront: 'Disk front (edit)',
+    sideBack: 'Disk back (preview)',
     help: 'Help',
     about: 'About',
   },
   edit: {
     resetConfirm: 'Start over? This removes all layers and restores the default label. You can undo it.',
+  },
+  side: {
+    front: 'Front',
+    back: 'Back',
+    backHint: 'See the disk\'s back with the folded label (wrap-around only)',
+    readOnly: 'Back view: read-only',
   },
   zoom: {
     fit: 'Fit',

@@ -325,6 +325,30 @@ body {
   margin-left: 4px;
 }
 
+.toolbar-gap {
+  flex: 1;
+}
+
+/* Toggle buttons: pressed = sunken, in both themes. */
+.zoom-toolbar .side-button {
+  min-width: 52px;
+}
+
+.zoom-toolbar .side-button[aria-pressed="true"] {
+  background: #dfdfdf;
+  box-shadow:
+    inset -1px -1px #ffffff,
+    inset 1px 1px #0a0a0a,
+    inset -2px -2px #dfdfdf,
+    inset 2px 2px #808080;
+  font-weight: bold;
+}
+
+.side-note {
+  margin-left: 4px;
+  color: var(--menu-disabled-fg);
+}
+
 /* Sunken frame around a scrollable area; the canvas inside is sized by JS. */
 .canvas-scroll {
   flex: 1;

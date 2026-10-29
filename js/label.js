@@ -147,6 +147,30 @@ export function exportPixelSize(geometry, dpi, { withBleed = true } = {}) {
   return { width: Math.round(rect.width * scale), height: Math.round(rect.height * scale) };
 }
 
+/** Same rect turned 180° in place: each corner moves to the opposite one. */
+export function rotateCorners180(rect) {
+  const c = rect.corners;
+  return {
+    ...rect,
+    corners: {
+      'top-left': c['bottom-right'],
+      'top-right': c['bottom-left'],
+      'bottom-right': c['top-left'],
+      'bottom-left': c['top-right'],
+    },
+  };
+}
+
+/**
+ * The back zone as it ends up on the disk's back, in the editor's reading
+ * orientation: content upright, the fold edge on top and the label's far end
+ * (with its corners) at the bottom. Null in front-only mode.
+ */
+export function backViewZone(geometry) {
+  const zone = geometry.zones.find((z) => z.id === 'back');
+  return zone ? rotateCorners180(zone) : null;
+}
+
 export function labelBounds(geometry) {
   const { x, y, width, height } = geometry.bleed;
   return { x, y, width, height };

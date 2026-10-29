@@ -27,9 +27,9 @@ export function shapePath(rect, props = {}) {
   });
 }
 
-/** Clip path for anything that belongs to the label: the cut line. */
-export function createLabelClipPath(geometry) {
-  return shapePath(geometry.outline, { absolutePositioned: true });
+/** Clip path for anything that belongs to the label: the cut line, or a zone. */
+export function createClipPath(rect) {
+  return shapePath(rect, { absolutePositioned: true });
 }
 
 export function createLabelView(canvas) {
@@ -37,6 +37,7 @@ export function createLabelView(canvas) {
   let guides = [];
   let geometry = null;
   let visible = { safety: true, bleed: true, fold: true };
+  let guidesHidden = false;
   let scale = 1;
 
   function setGeometry(next) {
@@ -52,9 +53,20 @@ export function createLabelView(canvas) {
       width,
       height,
       fill: '#ffffff',
-      clipPath: createLabelClipPath(geometry),
+      clipPath: createClipPath(geometry.outline),
     });
     canvas.add(base);
+    rebuildGuides();
+  }
+
+  function setClipRect(rect) {
+    base.clipPath = createClipPath(rect);
+    base.dirty = true;
+    canvas.requestRenderAll();
+  }
+
+  function setGuidesHidden(hidden) {
+    guidesHidden = hidden;
     rebuildGuides();
   }
 
@@ -100,6 +112,10 @@ export function createLabelView(canvas) {
     if (!geometry) return;
     canvas.remove(...guides);
     guides = [];
+    if (guidesHidden) {
+      canvas.requestRenderAll();
+      return;
+    }
     if (visible.bleed) guides.push(guide(geometry.bleed, GUIDE_COLORS.bleed, true));
     if (visible.safety) {
       for (const area of safetyAreas(geometry)) guides.push(guide(area, GUIDE_COLORS.safety, true));
@@ -111,6 +127,8 @@ export function createLabelView(canvas) {
 
   return {
     setGeometry,
+    setClipRect,
+    setGuidesHidden,
     setGuideVisibility,
     setScale,
     get guideVisibility() { return { ...visible }; },

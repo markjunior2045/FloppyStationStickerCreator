@@ -3,7 +3,9 @@ import { applyStrings, t } from './strings.js';
 import { initMenuBar } from './menu.js';
 import { DEFAULT_FORMAT } from './formats.js';
 import { createFloppyObjects, floppyBounds } from './floppy.js';
-import { defaultDimensions, defaultLabelSettings, labelBounds, labelGeometry } from './label.js';
+import {
+  backViewZone, defaultDimensions, defaultLabelSettings, labelBounds, labelGeometry,
+} from './label.js';
 import { createLabelView } from './labelView.js';
 import { initFloppyPanel } from './floppyPanel.js';
 import { initImagesPanel } from './imagesPanel.js';
@@ -37,8 +39,12 @@ const floppyObjects = createFloppyObjects(format);
 canvas.add(...floppyObjects);
 const labelView = createLabelView(canvas);
 
+// 'front' = the editor; 'back' = read-only view of the disk's back (wrap-around).
+let side = 'front';
+let backObjects = [];
+
 const layers = createLayerStore(canvas, {
-  below: () => [...floppyObjects, labelView.base],
+  below: () => [...floppyObjects, ...backObjects, labelView.base],
   above: () => labelView.guides,
   onChange: () => syncPanels(),
 });
@@ -51,7 +57,9 @@ const zoomStatus = document.getElementById('status-zoom');
 const viewport = createViewport(
   canvas,
   document.querySelector('.canvas-scroll'),
-  () => unionBounds(floppyBounds(format), labelBounds(geometry)),
+  () => (side === 'back'
+    ? floppyBounds(format, backViewZone(geometry).y)
+    : unionBounds(floppyBounds(format), labelBounds(geometry))),
   ({ mode, zoom }) => {
     const percent = Math.round(zoom * 100);
     zoomReadout.textContent = `${percent}%`;
@@ -81,13 +89,55 @@ function updateSettings(patch) {
   settings = { ...settings, ...patch };
   geometry = labelGeometry(settings, format);
   labelView.setGeometry(geometry);
-  layers.setClip(geometry);
   const background = currentBackground();
   if (background) constrainBackground(background.object, geometry.bleed);
-  layers.restack();
-  viewport.layout();
+  applySide();
   syncPanels();
   updateLabelStatus();
+}
+
+// ---- Front / back view ----
+
+/**
+ * Back view: the disk turned over, its top edge lined up with the back zone's
+ * top, everything clipped to the back zone as it sits on the disk. Same
+ * objects as the editor, so it always matches; nothing can be edited there.
+ */
+function applySide() {
+  if (settings.mode !== 'wrap') side = 'front';
+  const back = side === 'back';
+  const zone = back ? backViewZone(geometry) : null;
+  const clip = back ? zone : geometry.outline;
+
+  canvas.remove(...backObjects);
+  backObjects = back ? createFloppyObjects(format, 'back', zone.y) : [];
+  canvas.add(...backObjects);
+  for (const object of floppyObjects) object.visible = !back;
+
+  labelView.setClipRect(clip);
+  labelView.setGuidesHidden(back);
+  layers.setClip(clip);
+  layers.setInteractive(!back);
+  layers.restack();
+  viewport.layout();
+  syncSideControls();
+}
+
+function setSide(next) {
+  if (next === side || (next === 'back' && settings.mode !== 'wrap')) return;
+  side = next;
+  applySide();
+  syncPanels();
+}
+
+function syncSideControls() {
+  const wrap = settings.mode === 'wrap';
+  for (const el of document.querySelectorAll('[data-action="side-front"], [data-action="side-back"]')) {
+    const isBack = el.dataset.action === 'side-back';
+    if (el.classList.contains('side-button')) el.setAttribute('aria-pressed', String(isBack === (side === 'back')));
+    if (isBack) el.disabled = !wrap;
+  }
+  document.getElementById('side-note').hidden = side !== 'back';
 }
 
 function updateLabelStatus() {
@@ -141,6 +191,7 @@ const imagesPanel = initImagesPanel(document.getElementById('images-panel'), {
 });
 
 async function openImage(type, file) {
+  setSide('front');
   let src;
   let image;
   try {
@@ -212,6 +263,7 @@ const layerList = initLayerList(document.getElementById('layers-panel'), {
   onSelect: (id) => {
     const layer = layers.byId(id);
     if (!layer) return;
+    setSide('front');
     if (layer.object.visible && layer.object.selectable) {
       canvas.setActiveObject(layer.object);
     } else {
@@ -336,6 +388,8 @@ const actions = {
   'zoom-out': () => viewport.zoomOut(),
   'zoom-100': () => viewport.setZoom(1),
   'zoom-fit': () => viewport.fit(),
+  'side-front': () => setSide('front'),
+  'side-back': () => setSide('back'),
   undo: () => history.undo(),
   redo: () => history.redo(),
   reset: () => resetDocument(),

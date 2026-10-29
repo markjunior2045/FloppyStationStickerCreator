@@ -22,6 +22,14 @@ export const FLOPPY_35 = {
     cornerRadius: 0.5,
     window: { width: 11.0, height: 19.0, bottom: 4.0 },
   },
+  // Back side, seen with the disk turned over left-to-right (top edge stays
+  // on top), so the cut corner moves to the other side. Approximate.
+  back: {
+    labelRecess: { width: 73.0, height: 15.5 },
+    hub: { diameter: 25.0, centerY: 48.0, spindleHole: 4.0, pinHole: { width: 2.0, height: 3.5, dx: 7.0, dy: 3.0 } },
+    // Square holes near the bottom corners: write-protect on the cut-corner side.
+    holes: { size: 4.0, inset: 5.0, bottom: 8.0 },
+  },
 
   // Label defaults, validated with a real print (see PLAN.md Decisions).
   // The label is centered horizontally and starts at the body's top edge.

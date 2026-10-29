@@ -1,6 +1,6 @@
 // Layer store: the user's content (background, logo; text later), bottom to top.
 // Each layer owns one Fabric object, clipped to the label's cut line.
-import { createLabelClipPath } from './labelView.js';
+import { createClipPath } from './labelView.js';
 
 // Selection look shared by every layer, theme-neutral.
 export const LAYER_OBJECT_PROPS = {
@@ -28,7 +28,7 @@ export const newLayerId = () => `layer-${nextId++}`;
  */
 export function createLayerStore(canvas, hooks) {
   let layers = [];
-  let clipGeometry = null;
+  let clipRect = null;
   let interactive = true;
 
   function restack() {
@@ -55,7 +55,7 @@ export function createLayerStore(canvas, hooks) {
     byType: (type) => layers.filter((layer) => layer.type === type),
 
     add(layer, index = layers.length) {
-      layer.object.clipPath = clipGeometry ? createLabelClipPath(clipGeometry) : null;
+      layer.object.clipPath = clipRect ? createClipPath(clipRect) : null;
       layers.splice(index, 0, layer);
       canvas.add(layer.object);
       applyInteractivity(layer);
@@ -98,9 +98,9 @@ export function createLayerStore(canvas, hooks) {
     },
 
     /** Clip every layer to a shape (the cut line, or one zone in the back view). */
-    setClip(geometry) {
-      clipGeometry = geometry;
-      for (const layer of layers) layer.object.clipPath = createLabelClipPath(geometry);
+    setClip(rect) {
+      clipRect = rect;
+      for (const layer of layers) layer.object.clipPath = createClipPath(rect);
       canvas.requestRenderAll();
     },
 

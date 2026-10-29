@@ -41,6 +41,9 @@
           <li role="none"><button role="menuitem" data-action="zoom-out" data-i18n="menu.zoomOut"></button></li>
           <li role="none"><button role="menuitem" data-action="zoom-100" data-i18n="menu.actualSize"></button></li>
           <li role="none"><button role="menuitem" data-action="zoom-fit" data-i18n="menu.fit"></button></li>
+          <li role="separator" class="menu-separator"></li>
+          <li role="none"><button role="menuitem" data-action="side-front" data-i18n="menu.sideFront"></button></li>
+          <li role="none"><button role="menuitem" data-action="side-back" data-i18n="menu.sideBack"></button></li>
         </ul>
       </div>
       <div class="menu">
@@ -201,6 +204,10 @@
           <button data-action="zoom-out" class="zoom-step" data-i18n="zoom.out" data-i18n-title="menu.zoomOut"></button>
           <button data-action="zoom-in" class="zoom-step" data-i18n="zoom.in" data-i18n-title="menu.zoomIn"></button>
           <span class="zoom-readout" id="zoom-readout"></span>
+          <span class="toolbar-gap"></span>
+          <button data-action="side-front" class="side-button" aria-pressed="true" data-i18n="side.front"></button>
+          <button data-action="side-back" class="side-button" aria-pressed="false" data-i18n="side.back" data-i18n-title="side.backHint"></button>
+          <span class="side-note" id="side-note" data-i18n="side.readOnly" hidden></span>
         </div>
         <div class="canvas-scroll">
           <canvas id="label-canvas"></canvas>

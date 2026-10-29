@@ -27,9 +27,16 @@ export function shapePath(rect, props = {}) {
   });
 }
 
-/** Clip path for anything that belongs to the label: the cut line, or a zone. */
-export function createClipPath(rect) {
-  return shapePath(rect, { absolutePositioned: true });
+/** Clip path from one rect or several (their union), in world mm. */
+export function createClipPath(shape) {
+  const rects = Array.isArray(shape) ? shape : [shape];
+  const path = rects.map((r) => rectPath(r.width, r.height, r.corners, r.x, r.y)).join(' ');
+  return new Path(path, {
+    ...STATIC_PROPS,
+    left: Math.min(...rects.map((r) => r.x)),
+    top: Math.min(...rects.map((r) => r.y)),
+    absolutePositioned: true,
+  });
 }
 
 export function createLabelView(canvas) {
@@ -53,7 +60,7 @@ export function createLabelView(canvas) {
       width,
       height,
       fill: '#ffffff',
-      clipPath: createClipPath(geometry.outline),
+      clipPath: createClipPath(geometry.content),
     });
     canvas.add(base);
     rebuildGuides();
@@ -116,7 +123,7 @@ export function createLabelView(canvas) {
       canvas.requestRenderAll();
       return;
     }
-    if (visible.bleed) guides.push(guide(geometry.bleed, GUIDE_COLORS.bleed, true));
+    if (visible.bleed) guides.push(guide(geometry.bleedGuide, GUIDE_COLORS.bleed, true));
     if (visible.safety) {
       for (const area of safetyAreas(geometry)) guides.push(guide(area, GUIDE_COLORS.safety, true));
     }

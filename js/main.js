@@ -107,7 +107,7 @@ function applySide() {
   if (settings.mode !== 'wrap') side = 'front';
   const back = side === 'back';
   const zone = back ? backViewZone(geometry) : null;
-  const clip = back ? zone : geometry.outline;
+  const clip = back ? zone : geometry.content;
 
   canvas.remove(...backObjects);
   backObjects = back ? createFloppyObjects(format, 'back', zone.y) : [];

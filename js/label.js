@@ -64,7 +64,14 @@ function cornerSet(settings) {
  * Resolved geometry of the label in world mm:
  * - outline: cut line { x, y, width, height, corners }
  * - bleed: outline grown by the bleed on every side
- * - zones: [{ id, x, y, width, height, corners }] from top to bottom
+ * - zones: [{ id, x, y, width, height, corners }] from top to bottom, with
+ *   the physical strip's corners
+ * - content: the zones as the editor shows them. The back zone is edited in
+ *   reading orientation and turned 180° on export, so its shape is turned too:
+ *   the strip's far-end corners clip the bottom of the back content.
+ * - bleedGuide: where content keeps printing past the cut line, in the
+ *   editor's orientation (in wrap-around the back's top edge is the fold, so
+ *   there's no bleed above it)
  * - folds: y of each fold line (wrap-around only)
  */
 export function labelGeometry(settings, format) {
@@ -107,10 +114,24 @@ export function labelGeometry(settings, format) {
     },
   }));
 
+  const content = zones.map((zone) => (zone.id === 'back' ? rotateCorners180(zone) : zone));
+  const bleed = offsetRect(outline, settings.bleed);
+  let bleedGuide = bleed;
+  if (settings.mode === 'wrap') {
+    bleedGuide = {
+      ...bleed,
+      y: outline.y,
+      height: bleed.height - settings.bleed,
+      corners: { ...bleed.corners, 'top-left': square, 'top-right': square },
+    };
+  }
+
   return {
     outline,
-    bleed: offsetRect(outline, settings.bleed),
+    bleed,
+    bleedGuide,
     zones,
+    content,
     folds,
     safetyMargin: settings.safetyMargin,
   };
@@ -134,7 +155,7 @@ export function offsetRect(rect, delta) {
 
 /** Safety areas: each zone shrunk by the margin. The spine is too thin and has none. */
 export function safetyAreas(geometry) {
-  return geometry.zones
+  return geometry.content
     .filter((zone) => zone.id !== 'spine')
     .map((zone) => offsetRect(zone, -geometry.safetyMargin))
     .filter((rect) => rect.width > 0 && rect.height > 0);
@@ -167,8 +188,7 @@ export function rotateCorners180(rect) {
  * (with its corners) at the bottom. Null in front-only mode.
  */
 export function backViewZone(geometry) {
-  const zone = geometry.zones.find((z) => z.id === 'back');
-  return zone ? rotateCorners180(zone) : null;
+  return geometry.content.find((zone) => zone.id === 'back') ?? null;
 }
 
 export function labelBounds(geometry) {

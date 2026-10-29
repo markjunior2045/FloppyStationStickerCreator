@@ -59,6 +59,20 @@ export const STRINGS = {
     dimRadius: 'Corner radius',
     resetDefaults: 'Reset to defaults',
   },
+  images: {
+    background: 'Background',
+    logo: 'Logo',
+    open: 'Open…',
+    remove: 'Remove',
+    zoom: 'Zoom',
+    resetFraming: 'Reset framing',
+    dropHint: 'Tip: drop an image on the canvas to use it as the background.',
+    loadError: 'Could not open that image.',
+  },
+  layers: {
+    background: 'Background',
+    logo: 'Logo',
+  },
   groups: {
     floppy: 'Floppy',
     images: 'Images',

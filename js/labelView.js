@@ -114,5 +114,7 @@ export function createLabelView(canvas) {
     setGuideVisibility,
     setScale,
     get guideVisibility() { return { ...visible }; },
+    get base() { return base; },
+    get guides() { return [...guides]; },
   };
 }

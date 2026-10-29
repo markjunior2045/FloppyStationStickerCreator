@@ -6,6 +6,12 @@ import { createFloppyObjects, floppyBounds } from './floppy.js';
 import { defaultDimensions, defaultLabelSettings, labelBounds, labelGeometry } from './label.js';
 import { createLabelView } from './labelView.js';
 import { initFloppyPanel } from './floppyPanel.js';
+import { initImagesPanel } from './imagesPanel.js';
+import { createLayerStore } from './layers.js';
+import {
+  backgroundZoom, constrainBackground, createBackgroundLayer, resetBackgroundFraming, setBackgroundZoom,
+} from './background.js';
+import { acceptImageDrops, loadImage, readFileAsDataUrl } from './images.js';
 import { formatMm, SCREEN_PX_PER_MM } from './units.js';
 import { createViewport } from './viewport.js';
 
@@ -19,10 +25,20 @@ let geometry = labelGeometry(settings, format);
 const canvas = new Canvas('label-canvas', {
   backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--canvas-area-bg').trim(),
   selection: false,
+  preserveObjectStacking: true,
 });
 
-canvas.add(...createFloppyObjects(format));
+const floppyObjects = createFloppyObjects(format);
+canvas.add(...floppyObjects);
 const labelView = createLabelView(canvas);
+
+const layers = createLayerStore(canvas, {
+  below: () => [...floppyObjects, labelView.base],
+  above: () => labelView.guides,
+  onChange: () => syncPanels(),
+});
+
+// ---- Viewport ----
 
 const zoomReadout = document.getElementById('zoom-readout');
 const zoomStatus = document.getElementById('status-zoom');
@@ -39,11 +55,13 @@ const viewport = createViewport(
   },
 );
 
+// ---- Label settings ----
+
 const floppyPanel = initFloppyPanel(document.getElementById('floppy-panel'), {
   onSettings: (patch) => updateSettings(patch),
   onGuides: (patch) => {
     labelView.setGuideVisibility(patch);
-    floppyPanel.sync(settings, labelView.guideVisibility);
+    syncPanels();
   },
   onResetDimensions: () => updateSettings(defaultDimensions(format)),
 });
@@ -52,8 +70,12 @@ function updateSettings(patch) {
   settings = { ...settings, ...patch };
   geometry = labelGeometry(settings, format);
   labelView.setGeometry(geometry);
+  layers.setClip(geometry);
+  const background = currentBackground();
+  if (background) constrainBackground(background.object, geometry.bleed);
+  layers.restack();
   viewport.layout();
-  floppyPanel.sync(settings, labelView.guideVisibility);
+  syncPanels();
   updateLabelStatus();
 }
 
@@ -69,6 +91,74 @@ function updateLabelStatus() {
     back: formatMm(settings.back),
   });
 }
+
+// ---- Images ----
+
+const currentBackground = () => layers.byType('background')[0] ?? null;
+
+const imagesPanel = initImagesPanel(document.getElementById('images-panel'), {
+  onOpen: (type, file) => openImage(type, file),
+  onRemove: (type) => {
+    for (const layer of layers.byType(type)) layers.remove(layer.id);
+  },
+  onBackgroundZoom: (zoom) => {
+    const background = currentBackground();
+    if (!background) return;
+    setBackgroundZoom(background.object, geometry.bleed, zoom);
+    canvas.requestRenderAll();
+  },
+  onBackgroundReset: () => {
+    const background = currentBackground();
+    if (!background) return;
+    resetBackgroundFraming(background.object, geometry.bleed);
+    canvas.requestRenderAll();
+    syncPanels();
+  },
+});
+
+async function openImage(type, file) {
+  let src;
+  let image;
+  try {
+    src = await readFileAsDataUrl(file);
+    image = await loadImage(src);
+  } catch (error) {
+    console.error(error);
+    alert(t('images.loadError'));
+    return;
+  }
+  if (type === 'background') {
+    const previous = currentBackground();
+    const layer = createBackgroundLayer({ image, src, name: t('layers.background'), area: geometry.bleed });
+    if (previous) layers.remove(previous.id);
+    layers.add(layer, 0);
+    canvas.setActiveObject(layer.object);
+  }
+  syncPanels();
+}
+
+acceptImageDrops(document.querySelector('.canvas-scroll'), (file) => openImage('background', file));
+
+canvas.on('object:moving', ({ target }) => constrainIfBackground(target));
+canvas.on('object:scaling', ({ target }) => constrainIfBackground(target));
+canvas.on('object:modified', () => syncPanels());
+
+function constrainIfBackground(object) {
+  if (layers.byObject(object)?.type === 'background') {
+    constrainBackground(object, geometry.bleed);
+    syncPanels();
+  }
+}
+
+function syncPanels() {
+  floppyPanel.sync(settings, labelView.guideVisibility);
+  const background = currentBackground();
+  imagesPanel.sync({
+    background: background ? { zoom: backgroundZoom(background.object, geometry.bleed) } : null,
+  });
+}
+
+// ---- Commands ----
 
 function unionBounds(a, b) {
   const x = Math.min(a.x, b.x);
@@ -100,3 +190,8 @@ document.querySelector('.zoom-toolbar').addEventListener('click', (event) => {
 });
 
 updateSettings({});
+
+// ?debug exposes internals for manual testing in the console.
+if (new URLSearchParams(location.search).has('debug')) {
+  window.app = { canvas, layers, viewport, get settings() { return settings; }, get geometry() { return geometry; } };
+}

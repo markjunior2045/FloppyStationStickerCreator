@@ -95,6 +95,31 @@ body {
   text-align: right;
 }
 
+.slider-row input[type="range"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.slider-value {
+  min-width: 36px;
+  text-align: right;
+}
+
+.hint {
+  margin: 8px 0 0;
+  color: var(--menu-disabled-fg);
+}
+
+.image-slot + .image-slot {
+  margin-top: 10px;
+}
+
+/* Highlight while an image file is dragged over a drop area. */
+.drop-target {
+  outline: 2px dashed var(--menu-highlight-bg);
+  outline-offset: -4px;
+}
+
 .reset-row {
   justify-content: flex-end;
   margin-top: 8px;
